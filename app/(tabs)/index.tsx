@@ -48,13 +48,13 @@ export default function HomeScreen() {
     <SafeAreaView style={s.safe}>
       <StatusBar barStyle="dark-content" backgroundColor={T.bg} />
 
-      {/* Tatva Header — mandala logo + "Home" left, "Join Waitlist" primary right */}
+      {/* Tatva Header — mandala logo + "Akshar for LIC" left, "Join Waitlist" primary right */}
       <View style={s.header}>
         <View style={s.headerLeft}>
           <View style={s.brandMark}>
             <SvgXml xml={AKSHAR_LOGO_SVG} width={22} height={22} color={T.text} />
           </View>
-          <Text style={s.headerTitle}>Home</Text>
+          <Text style={s.headerTitle} numberOfLines={1}>Akshar for LIC</Text>
         </View>
         <TouchableOpacity style={s.waitlistBtn} activeOpacity={0.88}>
           <Text style={s.waitlistText}>Join Waitlist</Text>
@@ -336,7 +336,9 @@ const s = StyleSheet.create({
     backgroundColor: T.bg,
   },
   headerLeft: {
+    flex: 1,
     flexDirection: 'row', alignItems: 'center', gap: SPACE.sm,
+    marginRight: SPACE.sm,
   },
   brandMark: {
     width: 28, height: 28, borderRadius: 8,
@@ -344,7 +346,8 @@ const s = StyleSheet.create({
     backgroundColor: T.bgMuted,
   },
   headerTitle: {
-    fontSize: 22, fontWeight: '600', color: T.text, letterSpacing: -0.4,
+    flexShrink: 1,
+    fontSize: 20, fontWeight: '600', color: T.text, letterSpacing: -0.4,
   },
   waitlistBtn: {
     backgroundColor: T.dark,

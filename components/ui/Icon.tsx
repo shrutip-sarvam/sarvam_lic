@@ -5,6 +5,7 @@
  */
 import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
+import Svg, { Path, Polyline } from 'react-native-svg';
 
 type IconName =
   | 'plus' | 'close' | 'check' | 'chevron-down' | 'chevron-right' | 'chevron-left'
@@ -78,26 +79,41 @@ export function Icon({ name, size = 20, color = '#0A0A0A', strokeWidth = 1.75 }:
 
     case 'chevron-down':
       return (
-        <View style={container}>
-          <View style={{ width: s * 0.3, height: sw, backgroundColor: color, borderRadius: sw / 2, position: 'absolute', left: s * 0.22, top: s * 0.45, transform: [{ rotate: '45deg' }] }} />
-          <View style={{ width: s * 0.3, height: sw, backgroundColor: color, borderRadius: sw / 2, position: 'absolute', left: s * 0.48, top: s * 0.45, transform: [{ rotate: '-45deg' }] }} />
-        </View>
+        <Svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <Polyline
+            points="6 9 12 15 18 9"
+            stroke={color}
+            strokeWidth={sw}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
       );
 
     case 'chevron-right':
       return (
-        <View style={container}>
-          <View style={{ width: s * 0.3, height: sw, backgroundColor: color, borderRadius: sw / 2, position: 'absolute', transform: [{ rotate: '45deg' }], top: s * 0.35, left: s * 0.4 }} />
-          <View style={{ width: s * 0.3, height: sw, backgroundColor: color, borderRadius: sw / 2, position: 'absolute', transform: [{ rotate: '-45deg' }], top: s * 0.55, left: s * 0.4 }} />
-        </View>
+        <Svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <Polyline
+            points="9 6 15 12 9 18"
+            stroke={color}
+            strokeWidth={sw}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
       );
 
     case 'chevron-left':
       return (
-        <View style={container}>
-          <View style={{ width: s * 0.3, height: sw, backgroundColor: color, borderRadius: sw / 2, position: 'absolute', transform: [{ rotate: '-45deg' }], top: s * 0.35, left: s * 0.3 }} />
-          <View style={{ width: s * 0.3, height: sw, backgroundColor: color, borderRadius: sw / 2, position: 'absolute', transform: [{ rotate: '45deg' }], top: s * 0.55, left: s * 0.3 }} />
-        </View>
+        <Svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <Polyline
+            points="15 6 9 12 15 18"
+            stroke={color}
+            strokeWidth={sw}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
       );
 
     case 'arrow-up':

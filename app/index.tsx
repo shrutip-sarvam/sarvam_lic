@@ -1,14 +1,15 @@
 /**
- * Landing — full-screen Sarvam mandala over blue→orange gradient,
- * with "sarvam for LIC" and a Continue CTA. No white card panel.
+ * Landing — full-screen Akshar mandala over the navy→orange hero gradient,
+ * with the "Akshar" wordmark, a for-LIC sub-label, and a Continue CTA.
  */
 import React from 'react';
 import {
-  View, Text, StyleSheet, StatusBar, Image, Pressable,
+  View, Text, StyleSheet, StatusBar, Pressable,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { SARVAM_MONOGRAM_WHITE, SARVAM_WORDMARK_WHITE } from '../assets/sarvam-logo';
+import { SvgXml } from 'react-native-svg';
+import { AKSHAR_LOGO_SVG } from '../assets/akshar-logo';
 import { Icon } from '../components/ui/Icon';
 import { SPACE, RADIUS, FONT } from '../components/ui/tokens';
 
@@ -32,8 +33,8 @@ export default function LandingScreen() {
       />
 
       <View style={s.center}>
-        <Image source={SARVAM_MONOGRAM_WHITE} style={s.mandala} resizeMode="contain" />
-        <Image source={SARVAM_WORDMARK_WHITE} style={s.wordmark} resizeMode="contain" />
+        <SvgXml xml={AKSHAR_LOGO_SVG} width={160} height={160} color="#FFFFFF" />
+        <Text style={s.wordmark}>Akshar</Text>
         <View style={s.licBadge}>
           <Text style={s.licBadgeText}>for LIC</Text>
         </View>
@@ -54,8 +55,11 @@ const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#0A1530' },
 
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACE.md },
-  mandala: { width: 160, height: 160 },
-  wordmark: { width: 220, height: 54 },
+  wordmark: {
+    color: '#FFFFFF',
+    fontSize: 56, fontWeight: '500',
+    letterSpacing: -1.5, marginTop: 4,
+  },
   licBadge: {
     backgroundColor: 'rgba(255,255,255,0.22)',
     borderRadius: RADIUS.pill,

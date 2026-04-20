@@ -52,7 +52,7 @@ export default function RootLayout() {
             <Stack.Screen name="auth/sign-in" />
             <Stack.Screen name="auth/otp" />
             <Stack.Screen name="auth/name" />
-            <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
+            <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
             <Stack.Screen
               name="job/camera"
               options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', headerShown: false }}

@@ -16,7 +16,7 @@ import { useRouter } from 'expo-router';
 import { SvgXml } from 'react-native-svg';
 import { useJobsStore, type Job } from '../../store/jobs.store';
 import { Icon } from '../../components/ui/Icon';
-import { T, SPACE, RADIUS, FONT } from '../../components/ui/tokens';
+import { T, SPACE, RADIUS, FONT, FONT_FAMILY } from '../../components/ui/tokens';
 import { AKSHAR_LOGO_SVG } from '../../assets/akshar-logo';
 
 const STATUS_STYLE: Record<Job['status'], { bg: string; fg: string; label: string }> = {
@@ -48,13 +48,15 @@ export default function HomeScreen() {
     <SafeAreaView style={s.safe}>
       <StatusBar barStyle="dark-content" backgroundColor={T.bg} />
 
-      {/* Tatva Header — mandala logo + "Akshar for LIC" left, "Join Waitlist" primary right */}
+      {/* Tatva Header type="main" — page title "Home" on the left,
+          primary "Join Waitlist" action on the right.  Mirrors
+          akshar-frontend/src/app/dashboard/page.tsx lines 1713-1733. */}
       <View style={s.header}>
         <View style={s.headerLeft}>
           <View style={s.brandMark}>
             <SvgXml xml={AKSHAR_LOGO_SVG} width={22} height={22} color={T.text} />
           </View>
-          <Text style={s.headerTitle} numberOfLines={1}>Akshar for LIC</Text>
+          <Text style={s.headerTitle}>Home</Text>
         </View>
         <TouchableOpacity style={s.waitlistBtn} activeOpacity={0.88}>
           <Text style={s.waitlistText}>Join Waitlist</Text>
@@ -336,36 +338,42 @@ const s = StyleSheet.create({
     backgroundColor: T.bg,
   },
   headerLeft: {
-    flex: 1,
     flexDirection: 'row', alignItems: 'center', gap: SPACE.sm,
-    marginRight: SPACE.sm,
   },
   brandMark: {
     width: 28, height: 28, borderRadius: 8,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: T.bgMuted,
   },
+  // Tatva Header title — body-lg / semibold
   headerTitle: {
-    flexShrink: 1,
-    fontSize: 20, fontWeight: '600', color: T.text, letterSpacing: -0.4,
+    fontSize: 16, fontFamily: FONT_FAMILY.semibold, fontWeight: '600',
+    color: T.text, letterSpacing: -0.2,
   },
   waitlistBtn: {
     backgroundColor: T.dark,
     paddingHorizontal: 14, paddingVertical: 8,
     borderRadius: RADIUS.pill,
   },
-  waitlistText: { color: '#fff', fontSize: 13, fontWeight: '600', letterSpacing: -0.1 },
+  waitlistText: {
+    color: '#fff', fontSize: 13,
+    fontFamily: FONT_FAMILY.semibold, fontWeight: '600',
+    letterSpacing: -0.1,
+  },
   divider: { height: 1, backgroundColor: T.borderSoft },
 
   scroll: { paddingHorizontal: SPACE.lg, paddingTop: SPACE.lg },
 
+  // heading-md — Tatva 20/700/-0.4
   welcome: {
-    fontSize: 20, fontWeight: '700', color: T.text,
-    letterSpacing: -0.4, marginBottom: SPACE.lg,
+    fontSize: 20, fontFamily: FONT_FAMILY.bold, fontWeight: '700',
+    color: T.text, letterSpacing: -0.4, marginBottom: SPACE.lg,
   },
+  // heading-sm — Tatva 16/600/-0.2
   recent: {
-    fontSize: 16, fontWeight: '600', color: T.text,
-    letterSpacing: -0.2, marginTop: SPACE.xl, marginBottom: SPACE.md,
+    fontSize: 16, fontFamily: FONT_FAMILY.semibold, fontWeight: '600',
+    color: T.text, letterSpacing: -0.2,
+    marginTop: SPACE.xl, marginBottom: SPACE.md,
   },
 });
 
@@ -394,10 +402,16 @@ const u = StyleSheet.create({
     backgroundColor: '#fff',
   },
   thumbArrowWrap: { marginTop: 10 },
+  // Tatva Card heading — body-lg / semibold
   heading: {
-    fontSize: 18, fontWeight: '600', color: T.text, letterSpacing: -0.3,
+    fontSize: 16, fontFamily: FONT_FAMILY.semibold, fontWeight: '600',
+    color: T.text, letterSpacing: -0.2,
   },
-  desc: { ...FONT.small, color: T.textMuted },
+  // Tatva Card description — body-sm / regular / content-secondary
+  desc: {
+    fontSize: 13, fontFamily: FONT_FAMILY.regular, fontWeight: '400',
+    color: T.textSoft,
+  },
 });
 
 const e = StyleSheet.create({
@@ -406,12 +420,15 @@ const e = StyleSheet.create({
     paddingHorizontal: SPACE.lg, paddingBottom: 72,
   },
   glyph: { marginBottom: SPACE.xl },
+  // heading-lg — Tatva 24/700/-0.6
   title: {
-    fontSize: 28, fontWeight: '700', color: T.text,
-    letterSpacing: -0.6, textAlign: 'center',
+    fontSize: 24, fontFamily: FONT_FAMILY.bold, fontWeight: '700',
+    color: T.text, letterSpacing: -0.6, textAlign: 'center',
   },
+  // body-md — Tatva 14/400 / content-secondary
   sub: {
-    fontSize: 14, color: T.textSoft,
+    fontSize: 14, fontFamily: FONT_FAMILY.regular, fontWeight: '400',
+    color: T.textSoft,
     marginTop: SPACE.sm, marginBottom: SPACE.xl,
     textAlign: 'center', lineHeight: 20,
   },
@@ -423,7 +440,10 @@ const e = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     minWidth: 220,
   },
-  primaryText: { color: '#fff', fontSize: 15, fontWeight: '600', letterSpacing: -0.1 },
+  primaryText: {
+    color: '#fff', fontSize: 15,
+    fontFamily: FONT_FAMILY.semibold, fontWeight: '600', letterSpacing: -0.1,
+  },
   secondary: {
     backgroundColor: T.bg,
     borderWidth: 1, borderColor: T.border,
@@ -432,7 +452,10 @@ const e = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     minWidth: 220,
   },
-  secondaryText: { color: T.text, fontSize: 15, fontWeight: '600', letterSpacing: -0.1 },
+  secondaryText: {
+    color: T.text, fontSize: 15,
+    fontFamily: FONT_FAMILY.semibold, fontWeight: '600', letterSpacing: -0.1,
+  },
 });
 
 const c = StyleSheet.create({
@@ -447,11 +470,19 @@ const c = StyleSheet.create({
   thumbPlaceholder: { alignItems: 'center', justifyContent: 'center' },
   info: { flex: 1, gap: 2 },
   title: { ...FONT.h3, color: T.text },
-  formType: { ...FONT.small, color: T.textMuted },
+  formType: {
+    fontSize: 13, fontFamily: FONT_FAMILY.regular, fontWeight: '400',
+    color: T.textMuted,
+  },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 },
   statusPill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.sm },
-  statusText: { fontSize: 11, fontWeight: '600' },
-  date: { fontSize: 11, color: T.textFaint, fontWeight: '500' },
+  statusText: {
+    fontSize: 11, fontFamily: FONT_FAMILY.semibold, fontWeight: '600',
+  },
+  date: {
+    fontSize: 11, fontFamily: FONT_FAMILY.medium, fontWeight: '500',
+    color: T.textFaint,
+  },
   dot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: T.textFaint },
 });
 
@@ -481,7 +512,8 @@ const h = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 18, fontWeight: '600', color: T.text, letterSpacing: -0.3,
+    fontSize: 16, fontFamily: FONT_FAMILY.semibold, fontWeight: '600',
+    color: T.text, letterSpacing: -0.2,
   },
   closeBtn: {
     width: 32, height: 32, borderRadius: 16,
@@ -490,12 +522,14 @@ const h = StyleSheet.create({
   },
   scroll: { paddingHorizontal: SPACE.lg, paddingTop: SPACE.lg },
 
+  // heading-lg (24/700/-0.6)
   hero: {
-    fontSize: 26, fontWeight: '700', color: T.text,
-    letterSpacing: -0.6, lineHeight: 32,
+    fontSize: 24, fontFamily: FONT_FAMILY.bold, fontWeight: '700',
+    color: T.text, letterSpacing: -0.6, lineHeight: 30,
   },
   heroSub: {
-    fontSize: 14, color: T.textSoft,
+    fontSize: 14, fontFamily: FONT_FAMILY.regular, fontWeight: '400',
+    color: T.textSoft,
     marginTop: SPACE.sm, marginBottom: SPACE.xl,
     lineHeight: 21,
   },
@@ -514,15 +548,16 @@ const h = StyleSheet.create({
   },
   stepBody: { flex: 1, paddingTop: 2 },
   stepNum: {
-    fontSize: 11, fontWeight: '700', color: T.orange,
-    letterSpacing: 0.6, textTransform: 'uppercase',
+    fontSize: 11, fontFamily: FONT_FAMILY.bold, fontWeight: '700',
+    color: T.orange, letterSpacing: 0.6, textTransform: 'uppercase',
   },
   stepTitle: {
-    fontSize: 17, fontWeight: '600', color: T.text,
-    letterSpacing: -0.3, marginTop: 2, marginBottom: 4,
+    fontSize: 16, fontFamily: FONT_FAMILY.semibold, fontWeight: '600',
+    color: T.text, letterSpacing: -0.2, marginTop: 2, marginBottom: 4,
   },
   stepText: {
-    fontSize: 14, color: T.textSoft, lineHeight: 21,
+    fontSize: 14, fontFamily: FONT_FAMILY.regular, fontWeight: '400',
+    color: T.textSoft, lineHeight: 21,
   },
 
   noteCard: {
@@ -533,7 +568,8 @@ const h = StyleSheet.create({
     marginTop: SPACE.sm,
   },
   noteText: {
-    flex: 1, fontSize: 13, color: T.orangeText, lineHeight: 19,
+    flex: 1, fontSize: 13, fontFamily: FONT_FAMILY.regular, fontWeight: '400',
+    color: T.orangeText, lineHeight: 19,
   },
 
   footer: {
@@ -552,6 +588,7 @@ const h = StyleSheet.create({
     borderRadius: RADIUS.pill,
   },
   footerBtnText: {
-    color: '#fff', fontSize: 15, fontWeight: '600', letterSpacing: -0.1,
+    color: '#fff', fontSize: 15,
+    fontFamily: FONT_FAMILY.semibold, fontWeight: '600', letterSpacing: -0.1,
   },
 });

@@ -10,6 +10,7 @@
     "build:web": "expo export --platform web"
   },
   "dependencies": {
+    "@expo-google-fonts/geist": "^0.4.1",
     "@expo/metro-runtime": "~6.1.2",
     "@gorhom/bottom-sheet": "^5.2.9",
     "@react-native-async-storage/async-storage": "^3.0.2",

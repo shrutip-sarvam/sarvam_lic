@@ -12,7 +12,8 @@ type IconName =
   | 'camera' | 'upload' | 'file' | 'image' | 'menu'
   | 'search' | 'settings' | 'user' | 'home'
   | 'more' | 'trash' | 'edit' | 'download' | 'share'
-  | 'clock' | 'dot' | 'sparkle';
+  | 'clock' | 'dot' | 'sparkle'
+  | 'shield' | 'eye' | 'check-circle';
 
 interface Props {
   name: IconName;
@@ -252,6 +253,63 @@ export function Icon({ name, size = 20, color = '#0A0A0A', strokeWidth = 1.75 }:
           <View style={{ width: s * 0.65, height: sw, backgroundColor: color, borderRadius: sw / 2, position: 'absolute', top: s * 0.35, left: s * 0.1, transform: [{ rotate: '-45deg' }] }} />
           <View style={{ width: s * 0.18, height: sw * 2, backgroundColor: color, position: 'absolute', top: s * 0.12, right: s * 0.08, transform: [{ rotate: '-45deg' }], borderRadius: sw }} />
           <View style={{ width: s * 0.45, height: sw, backgroundColor: color, borderRadius: sw / 2, position: 'absolute', bottom: s * 0.1, left: s * 0.1 }} />
+        </View>
+      );
+
+    case 'shield':
+      return (
+        <View style={container}>
+          <View style={{
+            width: s * 0.7, height: s * 0.8,
+            borderWidth: sw, borderColor: color,
+            borderTopLeftRadius: s * 0.12, borderTopRightRadius: s * 0.12,
+            borderBottomLeftRadius: s * 0.35, borderBottomRightRadius: s * 0.35,
+            position: 'absolute', top: s * 0.1,
+          }} />
+          <View style={{
+            width: s * 0.2, height: sw,
+            backgroundColor: color, borderRadius: sw / 2,
+            position: 'absolute', top: s * 0.48, left: s * 0.32,
+            transform: [{ rotate: '45deg' }],
+          }} />
+          <View style={{
+            width: s * 0.3, height: sw,
+            backgroundColor: color, borderRadius: sw / 2,
+            position: 'absolute', top: s * 0.45, left: s * 0.42,
+            transform: [{ rotate: '-45deg' }],
+          }} />
+        </View>
+      );
+
+    case 'eye':
+      return (
+        <View style={container}>
+          <View style={{
+            width: s * 0.9, height: s * 0.55,
+            borderWidth: sw, borderColor: color,
+            borderRadius: s * 0.275,
+            position: 'absolute', top: s * 0.225,
+          }} />
+          <View style={{
+            width: s * 0.28, height: s * 0.28,
+            borderWidth: sw, borderColor: color,
+            borderRadius: s * 0.14,
+            position: 'absolute', top: s * 0.36, left: s * 0.36,
+          }} />
+        </View>
+      );
+
+    case 'check-circle':
+      return (
+        <View style={container}>
+          <View style={{
+            width: s * 0.85, height: s * 0.85,
+            borderWidth: sw, borderColor: color,
+            borderRadius: s * 0.425,
+            position: 'absolute', top: s * 0.075, left: s * 0.075,
+          }} />
+          <View style={{ width: s * 0.2, height: sw, backgroundColor: color, borderRadius: sw / 2, position: 'absolute', left: s * 0.28, top: s * 0.52, transform: [{ rotate: '45deg' }] }} />
+          <View style={{ width: s * 0.38, height: sw, backgroundColor: color, borderRadius: sw / 2, position: 'absolute', left: s * 0.4, top: s * 0.46, transform: [{ rotate: '-45deg' }] }} />
         </View>
       );
 

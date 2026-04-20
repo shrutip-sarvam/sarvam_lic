@@ -38,3 +38,6 @@ Thumbs.db
 
 # TypeScript
 *.tsbuildinfo
+
+# Reference repos (not part of this app)
+akshar-frontend-main/

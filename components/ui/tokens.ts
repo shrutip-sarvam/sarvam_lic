@@ -1,34 +1,35 @@
 /**
- * Akshar design tokens — clean, minimal, Sarvam-orange accent.
- * Used across all screens for visual consistency.
+ * Akshar design tokens — sourced from akshar-frontend (Tatva).
+ * Primary orange: #cb5534, foreground #262626, on #FFFFFF.
  */
 
 export const T = {
-  // Surfaces
+  // Surfaces (Akshar light)
   bg: '#FFFFFF',
   bgSoft: '#FAFAFA',
-  bgMuted: '#F5F5F7',
+  bgMuted: '#F5F5F5',
   bgCard: '#FFFFFF',
 
-  // Borders
-  border: '#E8E8E8',
+  // Borders (neutral-200/100)
+  border: '#E5E5E5',
   borderSoft: '#F0F0F0',
   borderStrong: '#D4D4D4',
 
-  // Text
-  text: '#0A0A0A',
-  textSoft: '#4A4A4A',
-  textMuted: '#8A8A8A',
-  textFaint: '#B8B8B8',
+  // Text (Akshar foreground + neutral ramp)
+  text: '#262626',
+  textSoft: '#525252',
+  textMuted: '#737373',
+  textFaint: '#A3A3A3',
 
-  // Brand
-  orange: '#E8612A',
-  orangeSoft: '#FDE8DA',
-  orangeText: '#8A3510',
+  // Brand (Akshar orange, exact)
+  orange: '#CB5534',
+  orangeHover: '#E06C4D',
+  orangeSoft: '#FFF1EC',
+  orangeText: '#7A2F1A',
 
-  // Semantic
+  // Semantic (Tatva-equivalent)
   blue: '#2563EB',
-  blueSoft: '#EEF4FF',
+  blueSoft: '#EFF4FF',
   green: '#16A34A',
   greenSoft: '#E8F5ED',
   red: '#DC2626',
@@ -36,9 +37,9 @@ export const T = {
   amber: '#D97706',
   amberSoft: '#FEF3E0',
 
-  // Dark actions
-  dark: '#0F0F0F',
-  darkHover: '#1F1F1F',
+  // Dark actions (neutral-900)
+  dark: '#171717',
+  darkHover: '#262626',
 } as const;
 
 export const SPACE = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;

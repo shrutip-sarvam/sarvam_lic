@@ -1,17 +1,21 @@
 /**
- * Home — clean Akshar-style dashboard.
- * Slim brand bar, a single hero CTA (Start a field visit), recent visits list.
+ * Home — Akshar-for-LIC dashboard.
+ * Mirrors the Akshar (Tatva) welcome card: mandala logo thumbnail, semi-bold
+ * heading, supportive description, four feature pills, and an Akshar-orange
+ * primary CTA. Below: quick stats + Recent visits, in the spirit of the
+ * Akshar dashboard "Recent" section.
  */
 import React, { useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, FlatList,
   SafeAreaView, StatusBar, Image, Alert, ScrollView,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { SvgXml } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useJobsStore, type Job } from '../../store/jobs.store';
 import { Icon } from '../../components/ui/Icon';
 import { T, SPACE, RADIUS, FONT } from '../../components/ui/tokens';
+import { AKSHAR_LOGO_SVG } from '../../assets/akshar-logo';
 
 const STATUS_STYLE: Record<Job['status'], { bg: string; fg: string; label: string }> = {
   Pending: { bg: T.amberSoft, fg: T.amber, label: 'Pending' },
@@ -21,6 +25,14 @@ const STATUS_STYLE: Record<Job['status'], { bg: string; fg: string; label: strin
 
 const todayLabel = () =>
   new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+
+type FeatureIcon = 'shield' | 'sparkle' | 'eye' | 'check-circle';
+const FEATURES: { label: string; icon: FeatureIcon }[] = [
+  { label: 'Secure processing', icon: 'shield' },
+  { label: 'High-quality extraction', icon: 'sparkle' },
+  { label: 'Easy data review', icon: 'eye' },
+  { label: 'Automatic validations', icon: 'check-circle' },
+];
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -40,13 +52,11 @@ export default function HomeScreen() {
     <SafeAreaView style={s.safe}>
       <StatusBar barStyle="dark-content" backgroundColor={T.bg} />
 
-      {/* Slim top bar */}
+      {/* Slim top bar — Akshar mandala + wordmark, no LIC pill */}
       <View style={s.topBar}>
         <View style={s.brandRow}>
-          <Text style={s.brand}>sarvam</Text>
-          <View style={s.licBadge}>
-            <Text style={s.licBadgeText}>for LIC</Text>
-          </View>
+          <SvgXml xml={AKSHAR_LOGO_SVG} width={22} height={22} color={T.text} />
+          <Text style={s.brand}>Akshar</Text>
         </View>
         <TouchableOpacity style={s.avatar}>
           <Text style={s.avatarText}>A</Text>
@@ -60,42 +70,54 @@ export default function HomeScreen() {
         {/* Greeting */}
         <Text style={s.today}>{todayLabel()}</Text>
         <Text style={s.greeting}>Good morning, Agent.</Text>
-        <Text style={s.subGreet}>Ready to capture a new field visit?</Text>
 
-        {/* Primary CTA — sunset gradient, matches landing */}
-        <TouchableOpacity activeOpacity={0.9} onPress={handleStart} style={s.ctaWrap}>
-          <LinearGradient
-            colors={['#E8612A', '#F08A3E', '#F4A85A']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={s.cta}
-          >
-            <View style={s.ctaIcon}>
-              <Icon name="camera" size={22} color="#fff" strokeWidth={1.75} />
+        {/* Welcome / Upload card — mirrors Akshar Tatva Card */}
+        <View style={s.welcomeCard}>
+          <View style={s.welcomeHead}>
+            <View style={s.logoTile}>
+              <SvgXml xml={AKSHAR_LOGO_SVG} width={36} height={36} color={T.orange} />
             </View>
-            <View style={s.ctaInfo}>
-              <Text style={s.ctaTitle}>Start a field visit</Text>
-              <Text style={s.ctaSub}>Scan LIC forms · extract details · track claims</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={s.welcomeTitle}>Akshar for LIC</Text>
+              <Text style={s.welcomeSub}>
+                Assist policyholders in the field with on-the-go scanning and upload.
+              </Text>
             </View>
+          </View>
+
+          {/* Feature pills */}
+          <View style={s.featureGrid}>
+            {FEATURES.map((f) => (
+              <View key={f.label} style={s.featurePill}>
+                <Icon name={f.icon} size={14} color={T.orange} strokeWidth={1.75} />
+                <Text style={s.featureText}>{f.label}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Primary CTA — Akshar orange */}
+          <TouchableOpacity activeOpacity={0.88} onPress={handleStart} style={s.cta}>
+            <Icon name="upload" size={18} color="#fff" strokeWidth={2} />
+            <Text style={s.ctaText}>Start new upload</Text>
             <View style={s.ctaArrow}>
-              <Icon name="arrow-right" size={16} color="#fff" strokeWidth={2.2} />
+              <Icon name="arrow-right" size={14} color="#fff" strokeWidth={2.2} />
             </View>
-          </LinearGradient>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
 
         {/* Quick stats row */}
         <View style={s.statRow}>
           <StatTile
             label="Total"
             value={jobs.length}
-            tint={T.blue}
-            tintBg={T.blueSoft}
+            tint={T.text}
+            tintBg={T.bgMuted}
           />
           <StatTile
             label="In progress"
             value={jobs.filter((j) => j.status === 'In Progress').length}
-            tint={T.amber}
-            tintBg={T.amberSoft}
+            tint={T.blue}
+            tintBg={T.blueSoft}
           />
           <StatTile
             label="Completed"
@@ -107,7 +129,7 @@ export default function HomeScreen() {
 
         {/* Recent visits */}
         <View style={s.sectionHeader}>
-          <Text style={s.sectionTitle}>Recent visits</Text>
+          <Text style={s.sectionTitle}>Recent</Text>
           {jobs.length > 0 && (
             <Text style={s.sectionCount}>
               {jobs.length} {jobs.length === 1 ? 'visit' : 'visits'}
@@ -122,7 +144,7 @@ export default function HomeScreen() {
             </View>
             <Text style={s.emptyTitle}>No visits yet</Text>
             <Text style={s.emptySub}>
-              Your captured LIC forms will appear here. Tap "Start a field visit" above.
+              Your captured LIC forms will appear here once you finish an upload.
             </Text>
           </View>
         ) : (
@@ -208,13 +230,7 @@ const s = StyleSheet.create({
     backgroundColor: T.bg,
   },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: SPACE.sm },
-  brand: { fontSize: 22, fontWeight: '800', color: T.text, letterSpacing: -0.6 },
-  licBadge: {
-    backgroundColor: T.orangeSoft,
-    borderRadius: RADIUS.pill,
-    paddingHorizontal: 10, paddingVertical: 3,
-  },
-  licBadgeText: { ...FONT.tiny, color: T.orangeText, fontWeight: '700' },
+  brand: { fontSize: 18, fontWeight: '600', color: T.text, letterSpacing: -0.3 },
   avatar: {
     width: 36, height: 36, borderRadius: 18,
     backgroundColor: T.bgMuted,
@@ -225,37 +241,71 @@ const s = StyleSheet.create({
 
   scroll: { paddingHorizontal: SPACE.lg, paddingTop: SPACE.xl },
 
-  today: { ...FONT.small, color: T.textMuted, textTransform: 'uppercase', letterSpacing: 0.6, fontWeight: '600' },
-  greeting: {
-    fontSize: 26, fontWeight: '700', color: T.text,
-    letterSpacing: -0.6, marginTop: 4,
+  today: {
+    ...FONT.small, color: T.textMuted,
+    textTransform: 'uppercase', letterSpacing: 0.6, fontWeight: '600',
   },
-  subGreet: { ...FONT.body, color: T.textMuted, marginTop: 4, marginBottom: SPACE.xl },
+  greeting: {
+    fontSize: 24, fontWeight: '600', color: T.text,
+    letterSpacing: -0.5, marginTop: 4, marginBottom: SPACE.xl,
+  },
 
-  ctaWrap: {
-    borderRadius: RADIUS.xl,
-    shadowColor: '#E8612A',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25, shadowRadius: 20,
-    elevation: 6,
+  welcomeCard: {
+    backgroundColor: T.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1, borderColor: T.border,
+    padding: SPACE.lg,
+    gap: SPACE.md,
     marginBottom: SPACE.xl,
   },
-  cta: {
+  welcomeHead: {
     flexDirection: 'row', alignItems: 'center', gap: SPACE.md,
-    borderRadius: RADIUS.xl,
-    padding: SPACE.lg,
   },
-  ctaIcon: {
-    width: 48, height: 48, borderRadius: RADIUS.md,
-    backgroundColor: 'rgba(255,255,255,0.22)',
+  logoTile: {
+    width: 52, height: 52, borderRadius: RADIUS.md,
+    backgroundColor: T.orangeSoft,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.28)',
   },
-  ctaInfo: { flex: 1 },
-  ctaTitle: { ...FONT.h3, color: '#fff', fontSize: 17 },
-  ctaSub: { ...FONT.small, color: 'rgba(255,255,255,0.88)', marginTop: 3, lineHeight: 18 },
+  welcomeTitle: {
+    fontSize: 18, fontWeight: '600', color: T.text,
+    letterSpacing: -0.3,
+  },
+  welcomeSub: {
+    fontSize: 13, fontWeight: '400',
+    color: T.textSoft, marginTop: 3, lineHeight: 18,
+  },
+
+  featureGrid: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: 6,
+    marginTop: 2,
+  },
+  featurePill: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 10, paddingVertical: 6,
+    borderRadius: RADIUS.pill,
+    backgroundColor: T.orangeSoft,
+  },
+  featureText: {
+    fontSize: 12, fontWeight: '500',
+    color: T.orangeText,
+  },
+
+  cta: {
+    flexDirection: 'row', alignItems: 'center',
+    gap: SPACE.sm,
+    backgroundColor: T.orange,
+    borderRadius: RADIUS.md,
+    paddingVertical: 14, paddingHorizontal: SPACE.md,
+    marginTop: SPACE.xs,
+  },
+  ctaText: {
+    flex: 1,
+    fontSize: 15, fontWeight: '600',
+    color: '#fff', letterSpacing: -0.2,
+    marginLeft: 2,
+  },
   ctaArrow: {
-    width: 30, height: 30, borderRadius: 15,
+    width: 26, height: 26, borderRadius: 13,
     backgroundColor: 'rgba(255,255,255,0.22)',
     alignItems: 'center', justifyContent: 'center',
   },
@@ -266,7 +316,7 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between',
     marginBottom: SPACE.md,
   },
-  sectionTitle: { ...FONT.h3, color: T.text, fontSize: 17 },
+  sectionTitle: { ...FONT.h3, color: T.text, fontSize: 17, fontWeight: '600' },
   sectionCount: { ...FONT.small, color: T.textMuted },
 
   emptyCard: {

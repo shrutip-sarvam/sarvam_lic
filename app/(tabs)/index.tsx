@@ -33,10 +33,10 @@ export default function HomeScreen() {
   const deleteJob = useJobsStore((s) => s.deleteJob);
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
-  // Frictionless flow: tap Upload → Camera directly (no intermediate dialog).
-  // Camera's "Upload a document instead" link is the fallback for users
-  // without camera permission.
-  const handleStart = useCallback(() => router.push('/job/camera'), [router]);
+  // Frictionless flow: Home → Upload dialog (camera / device + title + language)
+  // → Upload button saves the job and drops the agent back here, with the
+  // new visit at the top of Recent. No separate scan / claim form step.
+  const handleStart = useCallback(() => router.push('/job/upload'), [router]);
 
   const handleJobDelete = useCallback((id: string, name: string) => {
     Alert.alert('Delete Visit', `Remove "${name || 'this visit'}" permanently?`, [

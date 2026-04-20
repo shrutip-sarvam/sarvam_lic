@@ -31,7 +31,11 @@ const LANGUAGES: { code: string; label: string; native?: string }[] = [
 
 export default function UploadDocumentScreen() {
   const router = useRouter();
-  const { draftPhotoUris, draftLanguage, setDraftPhotos, setDraftMeta } = useJobsStore();
+  const {
+    draftPhotoUris, draftLanguage,
+    setDraftPhotos, setDraftMeta,
+    addJob, clearDraft,
+  } = useJobsStore();
 
   const [photos, setPhotos] = useState<string[]>([]);
   const [fileUri, setFileUri] = useState<string | null>(null);
@@ -112,15 +116,51 @@ export default function UploadDocumentScreen() {
   const canUpload = allUris.length > 0;
 
   const handleUpload = useCallback(() => {
+    // No attachment yet — open the Camera/Device picker instead of submitting.
     if (!canUpload) { setPickerOpen(true); return; }
+
     setUploading(true);
+
+    // Keep the store in sync in case we ever re-route through scan later,
+    // but the happy path saves the job right here and returns Home.
+    const title = docTitle.trim() || 'Untitled Visit';
     setDraftPhotos(allUris);
-    setDraftMeta(docTitle.trim() || 'Untitled Document', false, language);
+    setDraftMeta(title, false, language);
+
+    addJob({
+      docTitle: title,
+      handwritten: false,
+      photoUris: allUris,
+      rawExtractedText: '',
+      claimType: 'Death Claim',
+      dateOfEvent: '',
+      policyNumber: '',
+      holderName: title,
+      sumAssured: '',
+      dateOfCommencement: '',
+      claimantName: title,
+      claimantRelation: 'Self',
+      claimantPhone: '',
+      bankAccount: '',
+      bankIfsc: '',
+      bankName: '',
+      agentCode: '',
+      branchCode: '',
+      notes: '',
+    });
+
+    clearDraft();
+
+    // Tiny delay so the spinner is perceivable and the modal dismiss
+    // animation finishes before the Home render frame.
     setTimeout(() => {
       setUploading(false);
-      router.replace('/job/scan');
-    }, 200);
-  }, [canUpload, allUris, docTitle, language, setDraftPhotos, setDraftMeta, router]);
+      router.replace('/(tabs)');
+    }, 150);
+  }, [
+    canUpload, allUris, docTitle, language,
+    setDraftPhotos, setDraftMeta, addJob, clearDraft, router,
+  ]);
 
   const hasAttachment = photos.length > 0 || !!fileUri;
 

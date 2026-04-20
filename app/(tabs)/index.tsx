@@ -1,6 +1,6 @@
 /**
- * Dashboard — Akshar Vision blue hero.
- * Field Visit Assistant card opens the upload dialog.
+ * Home — clean Akshar-style dashboard.
+ * Slim brand bar, a single hero CTA (Start a field visit), recent visits list.
  */
 import React, { useCallback } from 'react';
 import {
@@ -13,22 +13,21 @@ import { useJobsStore, type Job } from '../../store/jobs.store';
 import { Icon } from '../../components/ui/Icon';
 import { T, SPACE, RADIUS, FONT } from '../../components/ui/tokens';
 
-const AKSHAR_BLUE_DARK = '#0F1E3D';
-const AKSHAR_BLUE = '#1E3A8A';
-const AKSHAR_BLUE_SOFT = '#3B5BC8';
-
 const STATUS_STYLE: Record<Job['status'], { bg: string; fg: string; label: string }> = {
   Pending: { bg: T.amberSoft, fg: T.amber, label: 'Pending' },
   'In Progress': { bg: T.blueSoft, fg: T.blue, label: 'In Progress' },
   Done: { bg: T.greenSoft, fg: T.green, label: 'Completed' },
 };
 
+const todayLabel = () =>
+  new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+
 export default function HomeScreen() {
   const router = useRouter();
   const jobs = useJobsStore((s) => s.jobs);
   const deleteJob = useJobsStore((s) => s.deleteJob);
 
-  const handleFieldVisit = useCallback(() => router.push('/job/upload'), [router]);
+  const handleStart = useCallback(() => router.push('/job/upload'), [router]);
 
   const handleJobDelete = useCallback((id: string, name: string) => {
     Alert.alert('Delete Visit', `Remove "${name || 'this visit'}" permanently?`, [
@@ -38,73 +37,75 @@ export default function HomeScreen() {
   }, [deleteJob]);
 
   return (
-    <View style={s.root}>
-      <StatusBar barStyle="light-content" />
+    <SafeAreaView style={s.safe}>
+      <StatusBar barStyle="dark-content" backgroundColor={T.bg} />
 
-      <LinearGradient
-        colors={[AKSHAR_BLUE_DARK, AKSHAR_BLUE, AKSHAR_BLUE_SOFT]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={s.hero}
-      >
-        <SafeAreaView>
-          <View style={s.topBar}>
-            <View style={s.brandRow}>
-              <Text style={s.brand}>sarvam</Text>
-              <View style={s.licBadge}>
-                <Text style={s.licBadgeText}>for LIC</Text>
-              </View>
-            </View>
-            <TouchableOpacity style={s.avatar}>
-              <Text style={s.avatarText}>A</Text>
-            </TouchableOpacity>
+      {/* Slim top bar */}
+      <View style={s.topBar}>
+        <View style={s.brandRow}>
+          <Text style={s.brand}>sarvam</Text>
+          <View style={s.licBadge}>
+            <Text style={s.licBadgeText}>for LIC</Text>
           </View>
-
-          <View style={s.heroContent}>
-            <Text style={s.greeting}>Welcome</Text>
-            <Text style={s.heroTitle}>Field Operations{'\n'}Dashboard</Text>
-            <Text style={s.heroSub}>
-              Digitize LIC documents with AI-powered OCR & translation
-            </Text>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+        </View>
+        <TouchableOpacity style={s.avatar}>
+          <Text style={s.avatarText}>A</Text>
+        </TouchableOpacity>
+      </View>
 
       <ScrollView
-        style={s.scrollArea}
-        contentContainerStyle={s.scrollContent}
+        contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
       >
-        <TouchableOpacity
-          style={s.featureCard}
-          onPress={handleFieldVisit}
-          activeOpacity={0.88}
-        >
-          <View style={s.featureIconWrap}>
-            <Icon name="camera" size={28} color="#fff" strokeWidth={1.75} />
-          </View>
-          <View style={s.featureInfo}>
-            <View style={s.featureTitleRow}>
-              <Text style={s.featureTitle}>Field Visit Assistant</Text>
-              <View style={s.featureArrow}>
-                <Icon name="arrow-right" size={14} color="#fff" strokeWidth={2} />
-              </View>
+        {/* Greeting */}
+        <Text style={s.today}>{todayLabel()}</Text>
+        <Text style={s.greeting}>Good morning, Agent.</Text>
+        <Text style={s.subGreet}>Ready to capture a new field visit?</Text>
+
+        {/* Primary CTA — sunset gradient, matches landing */}
+        <TouchableOpacity activeOpacity={0.9} onPress={handleStart} style={s.ctaWrap}>
+          <LinearGradient
+            colors={['#E8612A', '#F08A3E', '#F4A85A']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={s.cta}
+          >
+            <View style={s.ctaIcon}>
+              <Icon name="camera" size={22} color="#fff" strokeWidth={1.75} />
             </View>
-            <Text style={s.featureSub}>
-              Capture LIC forms, extract details, submit claims
-            </Text>
-            <View style={s.featureMeta}>
-              <View style={s.metaChip}>
-                <Icon name="sparkle" size={10} color="#fff" strokeWidth={2} />
-                <Text style={s.metaChipText}>AI OCR</Text>
-              </View>
-              <View style={s.metaChip}>
-                <Text style={s.metaChipText}>10+ languages</Text>
-              </View>
+            <View style={s.ctaInfo}>
+              <Text style={s.ctaTitle}>Start a field visit</Text>
+              <Text style={s.ctaSub}>Scan LIC forms · extract details · track claims</Text>
             </View>
-          </View>
+            <View style={s.ctaArrow}>
+              <Icon name="arrow-right" size={16} color="#fff" strokeWidth={2.2} />
+            </View>
+          </LinearGradient>
         </TouchableOpacity>
 
+        {/* Quick stats row */}
+        <View style={s.statRow}>
+          <StatTile
+            label="Total"
+            value={jobs.length}
+            tint={T.blue}
+            tintBg={T.blueSoft}
+          />
+          <StatTile
+            label="In progress"
+            value={jobs.filter((j) => j.status === 'In Progress').length}
+            tint={T.amber}
+            tintBg={T.amberSoft}
+          />
+          <StatTile
+            label="Completed"
+            value={jobs.filter((j) => j.status === 'Done').length}
+            tint={T.green}
+            tintBg={T.greenSoft}
+          />
+        </View>
+
+        {/* Recent visits */}
         <View style={s.sectionHeader}>
           <Text style={s.sectionTitle}>Recent visits</Text>
           {jobs.length > 0 && (
@@ -116,9 +117,12 @@ export default function HomeScreen() {
 
         {jobs.length === 0 ? (
           <View style={s.emptyCard}>
+            <View style={s.emptyIconWrap}>
+              <Icon name="file" size={26} color={T.textMuted} strokeWidth={1.5} />
+            </View>
             <Text style={s.emptyTitle}>No visits yet</Text>
             <Text style={s.emptySub}>
-              Tap "Field Visit Assistant" above to capture your first document.
+              Your captured LIC forms will appear here. Tap "Start a field visit" above.
             </Text>
           </View>
         ) : (
@@ -138,6 +142,17 @@ export default function HomeScreen() {
 
         <View style={{ height: SPACE.xxl }} />
       </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function StatTile({
+  label, value, tint, tintBg,
+}: { label: string; value: number; tint: string; tintBg: string }) {
+  return (
+    <View style={[stats.tile, { backgroundColor: tintBg }]}>
+      <Text style={[stats.value, { color: tint }]}>{value}</Text>
+      <Text style={stats.label}>{label}</Text>
     </View>
   );
 }
@@ -183,6 +198,105 @@ function DocumentCard({ job, onDelete }: { job: Job; onDelete: () => void }) {
   );
 }
 
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: T.bg },
+
+  topBar: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: SPACE.lg, paddingVertical: SPACE.md,
+    borderBottomWidth: 1, borderBottomColor: T.borderSoft,
+    backgroundColor: T.bg,
+  },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: SPACE.sm },
+  brand: { fontSize: 22, fontWeight: '800', color: T.text, letterSpacing: -0.6 },
+  licBadge: {
+    backgroundColor: T.orangeSoft,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: 10, paddingVertical: 3,
+  },
+  licBadgeText: { ...FONT.tiny, color: T.orangeText, fontWeight: '700' },
+  avatar: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: T.bgMuted,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: T.borderSoft,
+  },
+  avatarText: { ...FONT.bodyStrong, color: T.text },
+
+  scroll: { paddingHorizontal: SPACE.lg, paddingTop: SPACE.xl },
+
+  today: { ...FONT.small, color: T.textMuted, textTransform: 'uppercase', letterSpacing: 0.6, fontWeight: '600' },
+  greeting: {
+    fontSize: 26, fontWeight: '700', color: T.text,
+    letterSpacing: -0.6, marginTop: 4,
+  },
+  subGreet: { ...FONT.body, color: T.textMuted, marginTop: 4, marginBottom: SPACE.xl },
+
+  ctaWrap: {
+    borderRadius: RADIUS.xl,
+    shadowColor: '#E8612A',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25, shadowRadius: 20,
+    elevation: 6,
+    marginBottom: SPACE.xl,
+  },
+  cta: {
+    flexDirection: 'row', alignItems: 'center', gap: SPACE.md,
+    borderRadius: RADIUS.xl,
+    padding: SPACE.lg,
+  },
+  ctaIcon: {
+    width: 48, height: 48, borderRadius: RADIUS.md,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.28)',
+  },
+  ctaInfo: { flex: 1 },
+  ctaTitle: { ...FONT.h3, color: '#fff', fontSize: 17 },
+  ctaSub: { ...FONT.small, color: 'rgba(255,255,255,0.88)', marginTop: 3, lineHeight: 18 },
+  ctaArrow: {
+    width: 30, height: 30, borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+
+  statRow: { flexDirection: 'row', gap: SPACE.sm, marginBottom: SPACE.xl },
+
+  sectionHeader: {
+    flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between',
+    marginBottom: SPACE.md,
+  },
+  sectionTitle: { ...FONT.h3, color: T.text, fontSize: 17 },
+  sectionCount: { ...FONT.small, color: T.textMuted },
+
+  emptyCard: {
+    paddingVertical: SPACE.xxl, paddingHorizontal: SPACE.lg,
+    alignItems: 'center',
+    backgroundColor: T.bgMuted,
+    borderRadius: RADIUS.lg,
+    gap: SPACE.sm,
+  },
+  emptyIconWrap: {
+    width: 52, height: 52, borderRadius: 26,
+    backgroundColor: T.bg,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: T.borderSoft,
+  },
+  emptyTitle: { ...FONT.h3, color: T.text, marginTop: SPACE.sm },
+  emptySub: { ...FONT.small, color: T.textMuted, textAlign: 'center', maxWidth: 280, lineHeight: 18 },
+});
+
+const stats = StyleSheet.create({
+  tile: {
+    flex: 1,
+    paddingVertical: SPACE.md, paddingHorizontal: SPACE.md,
+    borderRadius: RADIUS.md,
+    gap: 2,
+  },
+  value: { fontSize: 22, fontWeight: '700', letterSpacing: -0.5 },
+  label: { ...FONT.tiny, color: T.textSoft, fontWeight: '600' },
+});
+
 const c = StyleSheet.create({
   card: {
     flexDirection: 'row', gap: SPACE.md,
@@ -203,92 +317,4 @@ const c = StyleSheet.create({
   footerRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
   footerDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: T.textFaint, marginHorizontal: 2 },
   date: { ...FONT.tiny, color: T.textFaint },
-});
-
-const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: T.bg },
-
-  hero: { paddingBottom: SPACE.xxl },
-  topBar: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: SPACE.lg, paddingVertical: SPACE.md,
-  },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: SPACE.sm },
-  brand: { fontSize: 22, fontWeight: '800', color: '#fff', letterSpacing: -0.6 },
-  licBadge: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: RADIUS.pill,
-    paddingHorizontal: 10, paddingVertical: 3,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)',
-  },
-  licBadgeText: { ...FONT.tiny, color: '#fff', fontWeight: '700' },
-  avatar: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)',
-  },
-  avatarText: { ...FONT.bodyStrong, color: '#fff' },
-
-  heroContent: { paddingHorizontal: SPACE.lg, paddingTop: SPACE.md, paddingBottom: SPACE.lg },
-  greeting: { ...FONT.small, color: 'rgba(255,255,255,0.7)', fontWeight: '500', marginBottom: 4 },
-  heroTitle: {
-    fontSize: 30, fontWeight: '700', color: '#fff',
-    letterSpacing: -0.8, lineHeight: 36, marginBottom: 10,
-  },
-  heroSub: {
-    ...FONT.body, color: 'rgba(255,255,255,0.75)', lineHeight: 20, maxWidth: 320,
-  },
-
-  scrollArea: { flex: 1, marginTop: -SPACE.xl },
-  scrollContent: { paddingHorizontal: SPACE.lg, paddingBottom: SPACE.lg },
-
-  featureCard: {
-    flexDirection: 'row', alignItems: 'center', gap: SPACE.md,
-    backgroundColor: AKSHAR_BLUE_DARK,
-    borderRadius: RADIUS.xl,
-    padding: SPACE.lg,
-    marginBottom: SPACE.xl,
-    shadowColor: AKSHAR_BLUE_DARK,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2, shadowRadius: 16,
-    elevation: 6,
-  },
-  featureIconWrap: {
-    width: 56, height: 56, borderRadius: RADIUS.md,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
-  },
-  featureInfo: { flex: 1 },
-  featureTitleRow: { flexDirection: 'row', alignItems: 'center', gap: SPACE.sm },
-  featureTitle: { flex: 1, ...FONT.h3, color: '#fff', fontSize: 17 },
-  featureArrow: {
-    width: 26, height: 26, borderRadius: 13,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  featureSub: { ...FONT.small, color: 'rgba(255,255,255,0.75)', marginTop: 3, lineHeight: 18 },
-  featureMeta: { flexDirection: 'row', gap: 6, marginTop: SPACE.sm },
-  metaChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: RADIUS.pill,
-    paddingHorizontal: 8, paddingVertical: 3,
-  },
-  metaChipText: { ...FONT.tiny, color: '#fff', fontWeight: '600' },
-
-  sectionHeader: {
-    flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between',
-    marginBottom: SPACE.md,
-  },
-  sectionTitle: { ...FONT.h3, color: T.text, fontSize: 17 },
-  sectionCount: { ...FONT.small, color: T.textMuted },
-
-  emptyCard: {
-    paddingVertical: SPACE.xl, paddingHorizontal: SPACE.lg,
-    alignItems: 'center', backgroundColor: T.bgMuted, borderRadius: RADIUS.lg,
-  },
-  emptyTitle: { ...FONT.h3, color: T.text, marginBottom: 4 },
-  emptySub: { ...FONT.small, color: T.textMuted, textAlign: 'center' },
 });

@@ -176,8 +176,10 @@ export default function JobCameraScreen() {
 
   const handlePhotos = (uris: string[]) => {
     setDraftPhotos(uris);
+    // Minimal flow: photos captured → jump straight to the name + upload step.
+    // The scan / long claim form are gone; frictionless beats feature-rich.
     if (returnTo === 'upload') router.back();
-    else router.replace('/job/upload');
+    else router.replace('/job/form');
   };
 
   if (Platform.OS === 'web') {
@@ -239,7 +241,7 @@ function NativeCameraScreen({
     if (photos.length === 0) { Alert.alert('No Photos', 'Capture at least one page first.'); return; }
     setDraftPhotos(photos);
     if (returnTo === 'upload') router.back();
-    else router.replace('/job/upload');
+    else router.replace('/job/form');
   }, [photos, setDraftPhotos, router, returnTo]);
 
   const handleCancel = useCallback(() => {

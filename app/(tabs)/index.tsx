@@ -33,7 +33,10 @@ export default function HomeScreen() {
   const deleteJob = useJobsStore((s) => s.deleteJob);
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
-  const handleStart = useCallback(() => router.push('/job/upload'), [router]);
+  // Frictionless flow: tap Upload → Camera directly (no intermediate dialog).
+  // Camera's "Upload a document instead" link is the fallback for users
+  // without camera permission.
+  const handleStart = useCallback(() => router.push('/job/camera'), [router]);
 
   const handleJobDelete = useCallback((id: string, name: string) => {
     Alert.alert('Delete Visit', `Remove "${name || 'this visit'}" permanently?`, [
@@ -175,18 +178,12 @@ function DocumentCard({ job, onDelete }: { job: Job; onDelete: () => void }) {
       )}
       <View style={c.info}>
         <Text style={c.title} numberOfLines={1}>{title}</Text>
-        <Text style={c.formType}>LIC Claim Form</Text>
+        <Text style={c.formType}>{job.photoUris.length} {job.photoUris.length === 1 ? 'page' : 'pages'}</Text>
         <View style={c.metaRow}>
           <View style={[c.statusPill, { backgroundColor: st.bg }]}>
             <Text style={[c.statusText, { color: st.fg }]}>{st.label}</Text>
           </View>
           <Text style={c.date}>{dateLabel}</Text>
-          {job.photoUris.length > 1 && (
-            <>
-              <View style={c.dot} />
-              <Text style={c.date}>{job.photoUris.length} pages</Text>
-            </>
-          )}
         </View>
       </View>
       <Icon name="chevron-right" size={18} color={T.textFaint} />

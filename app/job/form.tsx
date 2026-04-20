@@ -1,115 +1,91 @@
 /**
- * LIC Claim Form — real fields matching an actual LIC claim.
- * Pre-filled from Sarvam Vision OCR. User reviews/edits then saves.
- * Clean Akshar-style layout: sectioned fields, pill inputs, no emojis.
+ * Submit step — the entire "form" is a single Name field.
+ *
+ * Frictionless-by-design: after the agent finishes capturing photos the
+ * only thing left before the visit hits the Recent list is giving it a
+ * title. Everything else (claim type, policy number, bank details) used
+ * to live here and has been moved off the critical path.
+ *
+ * Flow: Home → Camera → this screen → Home (with the visit in Recent).
  */
 import React, { useMemo, useState, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, SafeAreaView, StatusBar, Alert, KeyboardAvoidingView, Platform,
+  ScrollView, SafeAreaView, StatusBar, Alert, KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useJobsStore, type ClaimType } from '../../store/jobs.store';
+import { useJobsStore } from '../../store/jobs.store';
 import { Icon } from '../../components/ui/Icon';
-import { T, SPACE, RADIUS, FONT } from '../../components/ui/tokens';
+import { T, SPACE, RADIUS, FONT_FAMILY } from '../../components/ui/tokens';
 
-const CLAIM_TYPES: ClaimType[] = [
-  'Death Claim', 'Maturity Claim', 'Survival Benefit', 'Disability Claim', 'Surrender Claim',
-];
-
-const RELATIONS = ['Self', 'Spouse', 'Son', 'Daughter', 'Nominee', 'Other'];
-
-export default function FormScreen() {
+export default function SubmitScreen() {
   const router = useRouter();
-  const {
-    draftPhotoUris, draftExtracted, draftDocTitle, draftHandwritten,
-    addJob, clearDraft,
-  } = useJobsStore();
+  const { draftPhotoUris, addJob, clearDraft } = useJobsStore();
 
-  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const [name, setName] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  // Policy (from OCR)
-  const [policyNumber, setPolicyNumber] = useState(draftExtracted?.policyNumber ?? '');
-  const [holderName, setHolderName] = useState(draftExtracted?.holderName ?? '');
-  const [sumAssured, setSumAssured] = useState(draftExtracted?.sumAssured ?? '');
-  const [dateOfCommencement, setDateOfCommencement] = useState('');
+  const pageCount = draftPhotoUris.length;
+  const today = useMemo(
+    () => new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+    [],
+  );
 
-  // Claim
-  const [claimType, setClaimType] = useState<ClaimType>('Death Claim');
-  const [dateOfEvent, setDateOfEvent] = useState(today);
-  const [causeOfDeath, setCauseOfDeath] = useState('');
+  const handleUpload = useCallback(() => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      Alert.alert('Name required', 'Give this visit a name so you can find it later.');
+      return;
+    }
+    if (submitting) return;
 
-  // Claimant
-  const [claimantName, setClaimantName] = useState('');
-  const [claimantRelation, setClaimantRelation] = useState('Self');
-  const [claimantPhone, setClaimantPhone] = useState('');
+    setSubmitting(true);
 
-  // Bank
-  const [bankAccount, setBankAccount] = useState('');
-  const [bankIfsc, setBankIfsc] = useState('');
-  const [bankName, setBankName] = useState('');
-
-  // Agent
-  const [agentCode, setAgentCode] = useState('');
-  const [branchCode, setBranchCode] = useState('');
-
-  const [notes, setNotes] = useState('');
-
-  const handleSave = useCallback(() => {
-    if (!policyNumber.trim()) { Alert.alert('Missing info', 'Policy number is required.'); return; }
-    if (!holderName.trim()) { Alert.alert('Missing info', 'Life assured name is required.'); return; }
-    if (!claimantName.trim()) { Alert.alert('Missing info', 'Claimant name is required.'); return; }
-
+    // Persist as a Job. Every field other than the bare minimum is
+    // defaulted — agents can enrich later from the Recent list.
     addJob({
-      docTitle: draftDocTitle || holderName,
-      handwritten: draftHandwritten,
+      docTitle: trimmed,
+      handwritten: false,
       photoUris: draftPhotoUris,
-      rawExtractedText: draftExtracted?.rawText ?? '',
-      claimType,
-      dateOfEvent,
-      causeOfDeath: claimType === 'Death Claim' ? causeOfDeath : undefined,
-      policyNumber: policyNumber.trim(),
-      holderName: holderName.trim(),
-      sumAssured: sumAssured.trim(),
-      dateOfCommencement,
-      claimantName: claimantName.trim(),
-      claimantRelation,
-      claimantPhone: claimantPhone.trim(),
-      bankAccount: bankAccount.trim(),
-      bankIfsc: bankIfsc.trim().toUpperCase(),
-      bankName: bankName.trim(),
-      agentCode: agentCode.trim(),
-      branchCode: branchCode.trim(),
-      notes: notes.trim(),
+      rawExtractedText: '',
+      claimType: 'Death Claim',
+      dateOfEvent: '',
+      policyNumber: '',
+      holderName: trimmed,
+      sumAssured: '',
+      dateOfCommencement: '',
+      claimantName: trimmed,
+      claimantRelation: 'Self',
+      claimantPhone: '',
+      bankAccount: '',
+      bankIfsc: '',
+      bankName: '',
+      agentCode: '',
+      branchCode: '',
+      notes: '',
     });
 
     clearDraft();
     router.replace('/(tabs)');
-  }, [
-    policyNumber, holderName, claimantName, addJob, draftDocTitle, draftHandwritten, draftPhotoUris,
-    draftExtracted, claimType, dateOfEvent, causeOfDeath, sumAssured, dateOfCommencement,
-    claimantRelation, claimantPhone, bankAccount, bankIfsc, bankName, agentCode, branchCode, notes,
-    clearDraft, router,
-  ]);
+  }, [name, submitting, addJob, draftPhotoUris, clearDraft, router]);
 
   return (
     <SafeAreaView style={s.safe}>
       <StatusBar barStyle="dark-content" backgroundColor={T.bg} />
 
-      {/* Header */}
+      {/* Tatva header — back, title, divider */}
       <View style={s.header}>
-        <TouchableOpacity style={s.iconBtn} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={s.iconBtn}
+          onPress={() => router.back()}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
           <Icon name="chevron-left" size={22} color={T.text} />
         </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={s.headerTitle}>LIC Claim Form</Text>
-          <Text style={s.headerSub}>Review and complete</Text>
-        </View>
-        <View style={s.ocrPill}>
-          <Icon name="sparkle" size={12} color={T.blue} strokeWidth={2} />
-          <Text style={s.ocrPillText}>OCR filled</Text>
-        </View>
+        <Text style={s.headerTitle}>New visit</Text>
+        <View style={s.iconBtn} />
       </View>
+      <View style={s.divider} />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -120,169 +96,75 @@ export default function FormScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Claim type */}
-          <Section title="Claim Type">
-            <ChipRow
-              options={CLAIM_TYPES}
-              value={claimType}
-              onChange={(v) => setClaimType(v as ClaimType)}
-            />
-          </Section>
-
-          {/* Policy */}
-          <Section title="Policy Details">
-            <Field
-              label="Policy Number"
-              value={policyNumber}
-              onChangeText={setPolicyNumber}
-              placeholder="e.g. 123456789"
-              required
-            />
-            <Field
-              label="Life Assured"
-              value={holderName}
-              onChangeText={setHolderName}
-              placeholder="Full name"
-              required
-            />
-            <Row>
-              <Field
-                label="Sum Assured"
-                value={sumAssured}
-                onChangeText={setSumAssured}
-                placeholder="₹ 5,00,000"
-                flex
-              />
-              <Field
-                label="Date of Commencement"
-                value={dateOfCommencement}
-                onChangeText={setDateOfCommencement}
-                placeholder="YYYY-MM-DD"
-                flex
-              />
-            </Row>
-          </Section>
-
-          {/* Event */}
-          <Section title={claimType === 'Death Claim' ? 'Death Details' : 'Event Details'}>
-            <Row>
-              <Field
-                label={claimType === 'Death Claim' ? 'Date of Death' : 'Event Date'}
-                value={dateOfEvent}
-                onChangeText={setDateOfEvent}
-                placeholder="YYYY-MM-DD"
-                flex
-              />
-              {claimType === 'Death Claim' && (
-                <Field
-                  label="Cause of Death"
-                  value={causeOfDeath}
-                  onChangeText={setCauseOfDeath}
-                  placeholder="e.g. Natural / Accident"
-                  flex
-                />
-              )}
-            </Row>
-          </Section>
-
-          {/* Claimant */}
-          <Section title="Claimant Details">
-            <Field
-              label="Claimant Name"
-              value={claimantName}
-              onChangeText={setClaimantName}
-              placeholder="Full name"
-              required
-            />
-            <View style={s.field}>
-              <Text style={s.label}>Relation to Life Assured</Text>
-              <ChipRow
-                options={RELATIONS}
-                value={claimantRelation}
-                onChange={setClaimantRelation}
-              />
+          {/* Capture summary — what the agent just shot */}
+          <View style={s.summary}>
+            <View style={s.summaryRow}>
+              <View style={s.summaryIcon}>
+                <Icon name="file" size={18} color={T.orange} strokeWidth={2} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.summaryTitle}>
+                  {pageCount} {pageCount === 1 ? 'page' : 'pages'} captured
+                </Text>
+                <Text style={s.summaryMeta}>{today}</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => router.replace('/job/camera')}
+                activeOpacity={0.7}
+              >
+                <Text style={s.retake}>Retake</Text>
+              </TouchableOpacity>
             </View>
-            <Field
-              label="Phone Number"
-              value={claimantPhone}
-              onChangeText={setClaimantPhone}
-              placeholder="+91"
-              keyboardType="phone-pad"
-            />
-          </Section>
 
-          {/* Bank */}
-          <Section title="Bank Details (for payout)">
-            <Field
-              label="Account Number"
-              value={bankAccount}
-              onChangeText={setBankAccount}
-              placeholder="Bank account number"
-              keyboardType="numeric"
-            />
-            <Row>
-              <Field
-                label="IFSC Code"
-                value={bankIfsc}
-                onChangeText={(v) => setBankIfsc(v.toUpperCase())}
-                placeholder="e.g. SBIN0001234"
-                flex
-                autoCapitalize="characters"
-              />
-              <Field
-                label="Bank Name"
-                value={bankName}
-                onChangeText={setBankName}
-                placeholder="e.g. SBI"
-                flex
-              />
-            </Row>
-          </Section>
+            {pageCount > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={s.thumbStrip}
+                style={{ marginTop: SPACE.md }}
+              >
+                {draftPhotoUris.map((uri, i) => (
+                  <View key={uri + i} style={s.thumbWrap}>
+                    <Image source={{ uri }} style={s.thumb} />
+                    <View style={s.thumbBadge}>
+                      <Text style={s.thumbBadgeText}>{i + 1}</Text>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+          </View>
 
-          {/* Agent */}
-          <Section title="Agent & Branch">
-            <Row>
-              <Field
-                label="Agent Code"
-                value={agentCode}
-                onChangeText={setAgentCode}
-                placeholder="Optional"
-                flex
-              />
-              <Field
-                label="Branch Code"
-                value={branchCode}
-                onChangeText={setBranchCode}
-                placeholder="Optional"
-                flex
-              />
-            </Row>
-          </Section>
-
-          {/* Notes */}
-          <Section title="Additional Remarks">
+          {/* The single input */}
+          <View style={{ marginTop: SPACE.xl }}>
+            <Text style={s.label}>Name this visit</Text>
             <TextInput
-              style={[s.input, s.textarea]}
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Any additional information…"
+              style={s.input}
+              value={name}
+              onChangeText={setName}
+              placeholder="e.g. Rajesh Kumar"
               placeholderTextColor={T.textFaint}
-              multiline
-              textAlignVertical="top"
+              autoFocus
+              autoCapitalize="words"
+              returnKeyType="done"
+              onSubmitEditing={handleUpload}
             />
-          </Section>
-
-          <View style={{ height: SPACE.xxl }} />
+            <Text style={s.helper}>
+              You can edit claim details later from the Recent list.
+            </Text>
+          </View>
         </ScrollView>
 
-        {/* Sticky footer */}
+        {/* Sticky Upload button — this is the final click */}
         <View style={s.footer}>
-          <TouchableOpacity style={s.cancelBtn} onPress={() => router.back()}>
-            <Text style={s.cancelText}>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.saveBtn} onPress={handleSave} activeOpacity={0.88}>
-            <Icon name="check" size={16} color="#fff" strokeWidth={2.5} />
-            <Text style={s.saveText}>Save Claim</Text>
+          <TouchableOpacity
+            style={[s.uploadBtn, (!name.trim() || submitting) && s.uploadBtnDisabled]}
+            onPress={handleUpload}
+            disabled={!name.trim() || submitting}
+            activeOpacity={0.88}
+          >
+            <Text style={s.uploadText}>{submitting ? 'Uploading…' : 'Upload'}</Text>
+            {!submitting && <Icon name="arrow-right" size={16} color="#fff" strokeWidth={2.2} />}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -290,145 +172,98 @@ export default function FormScreen() {
   );
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <View style={sec.wrap}>
-      <Text style={sec.title}>{title}</Text>
-      <View style={sec.body}>{children}</View>
-    </View>
-  );
-}
-const sec = StyleSheet.create({
-  wrap: { marginBottom: SPACE.lg },
-  title: { ...FONT.label, color: T.textMuted, marginBottom: SPACE.sm, marginLeft: 4 },
-  body: {
-    backgroundColor: T.bg,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1, borderColor: T.borderSoft,
-    padding: SPACE.md,
-    gap: SPACE.md,
-  },
-});
-
-function Row({ children }: { children: React.ReactNode }) {
-  return <View style={{ flexDirection: 'row', gap: SPACE.sm }}>{children}</View>;
-}
-
-function Field(props: {
-  label: string;
-  value: string;
-  onChangeText: (v: string) => void;
-  placeholder?: string;
-  required?: boolean;
-  flex?: boolean;
-  keyboardType?: any;
-  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
-}) {
-  return (
-    <View style={[s.field, props.flex && { flex: 1 }]}>
-      <Text style={s.label}>
-        {props.label}
-        {props.required && <Text style={{ color: T.red }}> *</Text>}
-      </Text>
-      <TextInput
-        style={s.input}
-        value={props.value}
-        onChangeText={props.onChangeText}
-        placeholder={props.placeholder}
-        placeholderTextColor={T.textFaint}
-        keyboardType={props.keyboardType}
-        autoCapitalize={props.autoCapitalize ?? 'sentences'}
-      />
-    </View>
-  );
-}
-
-function ChipRow({
-  options, value, onChange,
-}: { options: string[]; value: string; onChange: (v: string) => void }) {
-  return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ gap: 8, paddingVertical: 2 }}
-    >
-      {options.map((opt) => {
-        const selected = value === opt;
-        return (
-          <TouchableOpacity
-            key={opt}
-            onPress={() => onChange(opt)}
-            activeOpacity={0.8}
-            style={[chip.base, selected ? chip.on : chip.off]}
-          >
-            <Text style={[chip.txt, selected ? chip.txtOn : chip.txtOff]}>{opt}</Text>
-          </TouchableOpacity>
-        );
-      })}
-    </ScrollView>
-  );
-}
-const chip = StyleSheet.create({
-  base: {
-    paddingHorizontal: SPACE.md, paddingVertical: 8,
-    borderRadius: RADIUS.pill, borderWidth: 1,
-  },
-  on: { backgroundColor: T.dark, borderColor: T.dark },
-  off: { backgroundColor: T.bg, borderColor: T.border },
-  txt: { ...FONT.small, fontWeight: '600' },
-  txtOn: { color: '#fff' },
-  txtOff: { color: T.textSoft },
-});
-
-// ─── Main styles ──────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: T.bgMuted },
+  safe: { flex: 1, backgroundColor: T.bg },
 
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: SPACE.md, paddingVertical: SPACE.md,
     backgroundColor: T.bg,
-    borderBottomWidth: 1, borderBottomColor: T.borderSoft,
-    gap: SPACE.sm,
   },
   iconBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { ...FONT.h3, color: T.text },
-  headerSub: { ...FONT.tiny, color: T.textMuted, marginTop: 1 },
-  ocrPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: T.blueSoft, borderRadius: RADIUS.pill,
-    paddingHorizontal: 10, paddingVertical: 4,
+  headerTitle: {
+    flex: 1, textAlign: 'center',
+    fontSize: 16, fontFamily: FONT_FAMILY.semibold, fontWeight: '600',
+    color: T.text, letterSpacing: -0.2,
   },
-  ocrPillText: { ...FONT.tiny, color: T.blue, fontWeight: '700' },
+  divider: { height: 1, backgroundColor: T.borderSoft },
 
   scroll: { padding: SPACE.lg },
 
-  field: { gap: 6 },
-  label: { ...FONT.small, fontWeight: '600', color: T.textSoft },
+  summary: {
+    backgroundColor: T.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1, borderColor: T.border,
+    padding: SPACE.md,
+  },
+  summaryRow: { flexDirection: 'row', alignItems: 'center', gap: SPACE.md },
+  summaryIcon: {
+    width: 40, height: 40, borderRadius: RADIUS.md,
+    backgroundColor: T.orangeSoft,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  summaryTitle: {
+    fontSize: 15, fontFamily: FONT_FAMILY.semibold, fontWeight: '600',
+    color: T.text, letterSpacing: -0.2,
+  },
+  summaryMeta: {
+    fontSize: 12, fontFamily: FONT_FAMILY.regular, fontWeight: '400',
+    color: T.textMuted, marginTop: 1,
+  },
+  retake: {
+    fontSize: 13, fontFamily: FONT_FAMILY.semibold, fontWeight: '600',
+    color: T.orange,
+  },
+
+  thumbStrip: { gap: SPACE.sm, paddingVertical: 4 },
+  thumbWrap: { position: 'relative' },
+  thumb: {
+    width: 72, height: 88,
+    borderRadius: RADIUS.md,
+    borderWidth: 1, borderColor: T.border,
+    backgroundColor: T.bgMuted,
+  },
+  thumbBadge: {
+    position: 'absolute', top: 4, left: 4,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderRadius: 6, paddingHorizontal: 5, paddingVertical: 1,
+  },
+  thumbBadgeText: {
+    color: '#fff',
+    fontSize: 10, fontFamily: FONT_FAMILY.bold, fontWeight: '700',
+  },
+
+  label: {
+    fontSize: 13, fontFamily: FONT_FAMILY.semibold, fontWeight: '600',
+    color: T.textSoft, marginBottom: SPACE.sm,
+  },
   input: {
     borderWidth: 1, borderColor: T.border, borderRadius: RADIUS.md,
-    paddingHorizontal: SPACE.md, paddingVertical: 11,
-    ...FONT.body, color: T.text, backgroundColor: T.bg,
+    paddingHorizontal: SPACE.md, paddingVertical: 13,
+    fontSize: 16, fontFamily: FONT_FAMILY.regular, fontWeight: '400',
+    color: T.text, backgroundColor: T.bg,
   },
-  textarea: { minHeight: 90, paddingTop: 12 },
+  helper: {
+    fontSize: 12, fontFamily: FONT_FAMILY.regular, fontWeight: '400',
+    color: T.textMuted, marginTop: SPACE.sm,
+  },
 
   footer: {
-    flexDirection: 'row', gap: SPACE.sm,
-    paddingHorizontal: SPACE.lg, paddingVertical: SPACE.md,
-    backgroundColor: T.bg,
+    paddingHorizontal: SPACE.lg,
+    paddingTop: SPACE.md, paddingBottom: SPACE.md,
     borderTopWidth: 1, borderTopColor: T.borderSoft,
+    backgroundColor: T.bg,
   },
-  cancelBtn: {
-    flex: 1, paddingVertical: 13,
-    borderRadius: RADIUS.pill, backgroundColor: T.bgMuted,
-    alignItems: 'center', justifyContent: 'center',
+  uploadBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8,
+    backgroundColor: T.dark,
+    paddingVertical: 15, paddingHorizontal: 20,
+    borderRadius: RADIUS.pill,
   },
-  cancelText: { ...FONT.bodyStrong, color: T.text },
-  saveBtn: {
-    flex: 2, flexDirection: 'row', gap: 8,
-    paddingVertical: 13, borderRadius: RADIUS.pill, backgroundColor: T.dark,
-    alignItems: 'center', justifyContent: 'center',
+  uploadBtnDisabled: { backgroundColor: T.borderStrong },
+  uploadText: {
+    color: '#fff', fontSize: 15,
+    fontFamily: FONT_FAMILY.semibold, fontWeight: '600', letterSpacing: -0.1,
   },
-  saveText: { color: '#fff', ...FONT.bodyStrong },
 });

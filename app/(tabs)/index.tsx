@@ -51,9 +51,9 @@ export default function HomeScreen() {
     <SafeAreaView style={s.safe}>
       <StatusBar barStyle="dark-content" backgroundColor={T.bg} />
 
-      {/* Tatva Header type="main" — page title "Home" on the left,
-          primary "Join Waitlist" action on the right.  Mirrors
-          akshar-frontend/src/app/dashboard/page.tsx lines 1713-1733. */}
+      {/* Tatva Header type="main" — mandala + page title "Home" on the left.
+          Mirrors akshar-frontend/src/app/dashboard/page.tsx lines 1713-1733,
+          minus the Join Waitlist action (the demo app doesn't need it). */}
       <View style={s.header}>
         <View style={s.headerLeft}>
           <View style={s.brandMark}>
@@ -61,9 +61,6 @@ export default function HomeScreen() {
           </View>
           <Text style={s.headerTitle}>Home</Text>
         </View>
-        <TouchableOpacity style={s.waitlistBtn} activeOpacity={0.88}>
-          <Text style={s.waitlistText}>Join Waitlist</Text>
-        </TouchableOpacity>
       </View>
       <View style={s.divider} />
 
@@ -346,16 +343,6 @@ const s = StyleSheet.create({
   headerTitle: {
     fontSize: 16, fontFamily: FONT_FAMILY.semibold, fontWeight: '600',
     color: T.text, letterSpacing: -0.2,
-  },
-  waitlistBtn: {
-    backgroundColor: T.dark,
-    paddingHorizontal: 14, paddingVertical: 8,
-    borderRadius: RADIUS.pill,
-  },
-  waitlistText: {
-    color: '#fff', fontSize: 13,
-    fontFamily: FONT_FAMILY.semibold, fontWeight: '600',
-    letterSpacing: -0.1,
   },
   divider: { height: 1, backgroundColor: T.borderSoft },
 

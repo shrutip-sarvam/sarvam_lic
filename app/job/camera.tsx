@@ -176,7 +176,8 @@ export default function JobCameraScreen() {
 
   const handlePhotos = (uris: string[]) => {
     setDraftPhotos(uris);
-    router.back();
+    if (returnTo === 'upload') router.back();
+    else router.replace('/job/upload');
   };
 
   if (Platform.OS === 'web') {
@@ -237,8 +238,9 @@ function NativeCameraScreen({
   const handleDone = useCallback(() => {
     if (photos.length === 0) { Alert.alert('No Photos', 'Capture at least one page first.'); return; }
     setDraftPhotos(photos);
-    router.back();
-  }, [photos, setDraftPhotos, router]);
+    if (returnTo === 'upload') router.back();
+    else router.replace('/job/upload');
+  }, [photos, setDraftPhotos, router, returnTo]);
 
   const handleCancel = useCallback(() => {
     if (photos.length > 0) {
@@ -300,7 +302,7 @@ function NativeCameraScreen({
 
           <TouchableOpacity
             style={p.uploadLink}
-            onPress={() => router.back()}
+            onPress={() => router.replace('/job/upload')}
             activeOpacity={0.7}
           >
             <Icon name="upload" size={14} color={T.textMuted} />

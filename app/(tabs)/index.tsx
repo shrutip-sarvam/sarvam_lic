@@ -7,10 +7,10 @@
  *   - Decorative Indic-script strip at the bottom edge
  *   - Empty state mirrors the Akshar /upload-page.svg flow
  */
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, FlatList,
-  SafeAreaView, StatusBar, Image, Alert, ScrollView,
+  SafeAreaView, StatusBar, Image, Alert, ScrollView, Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SvgXml } from 'react-native-svg';
@@ -31,6 +31,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const jobs = useJobsStore((s) => s.jobs);
   const deleteJob = useJobsStore((s) => s.deleteJob);
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
   const handleStart = useCallback(() => router.push('/job/upload'), [router]);
 
@@ -62,7 +63,7 @@ export default function HomeScreen() {
       <View style={s.divider} />
 
       {isEmpty ? (
-        <EmptyState onStart={handleStart} />
+        <EmptyState onStart={handleStart} onLearnMore={() => setHowItWorksOpen(true)} />
       ) : (
         <ScrollView
           contentContainerStyle={s.scroll}
@@ -95,12 +96,28 @@ export default function HomeScreen() {
 
       {/* Decorative Indic-script strip — mirrors dashboard /indic-bg.png */}
       <IndicStrip />
+
+      {/* How it works — content modal reached from the empty state */}
+      <HowItWorksModal
+        visible={howItWorksOpen}
+        onClose={() => setHowItWorksOpen(false)}
+        onStart={() => {
+          setHowItWorksOpen(false);
+          handleStart();
+        }}
+      />
     </SafeAreaView>
   );
 }
 
 /* ─── Empty state — mirrors Akshar /upload-page.svg centered flow ──────────── */
-function EmptyState({ onStart }: { onStart: () => void }) {
+function EmptyState({
+  onStart,
+  onLearnMore,
+}: {
+  onStart: () => void;
+  onLearnMore: () => void;
+}) {
   return (
     <View style={e.root}>
       <View style={e.glyph}>
@@ -114,7 +131,7 @@ function EmptyState({ onStart }: { onStart: () => void }) {
         <TouchableOpacity style={e.primary} onPress={onStart} activeOpacity={0.88}>
           <Text style={e.primaryText}>Upload Document</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={e.secondary} activeOpacity={0.8}>
+        <TouchableOpacity style={e.secondary} onPress={onLearnMore} activeOpacity={0.8}>
           <Text style={e.secondaryText}>Learn How It Works</Text>
         </TouchableOpacity>
       </View>
@@ -172,6 +189,130 @@ function DocumentCard({ job, onDelete }: { job: Job; onDelete: () => void }) {
       </View>
       <Icon name="chevron-right" size={18} color={T.textFaint} />
     </TouchableOpacity>
+  );
+}
+
+/* ─── How it works — drawer-style modal explaining the Akshar-for-LIC flow ──── */
+type Step = {
+  num: string;
+  icon: 'camera' | 'sparkle' | 'eye' | 'check-circle';
+  title: string;
+  body: string;
+};
+
+const HOW_IT_WORKS_STEPS: Step[] = [
+  {
+    num: '01',
+    icon: 'camera',
+    title: 'Capture or upload',
+    body:
+      'Shoot every page of the claim form with your camera, or pick an existing PDF or image from your device. Add as many pages as the visit needs — they all ride in a single upload.',
+  },
+  {
+    num: '02',
+    icon: 'sparkle',
+    title: 'Automatic extraction',
+    body:
+      'Sarvam Vision reads each page, detects the document language, and pulls out structured claim data — policy number, claimant, sum assured, bank details and the rest.',
+  },
+  {
+    num: '03',
+    icon: 'eye',
+    title: 'Review in seconds',
+    body:
+      'Verify the auto-filled LIC Claim Form, fix anything the model missed, and mark the visit as handwritten if needed. Every field is editable before submit.',
+  },
+  {
+    num: '04',
+    icon: 'check-circle',
+    title: 'Submit the visit',
+    body:
+      'The visit shows up on your dashboard the moment you submit, ready to forward on to the back-office for processing and validation.',
+  },
+];
+
+function HowItWorksModal({
+  visible,
+  onClose,
+  onStart,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onStart: () => void;
+}) {
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      <SafeAreaView style={h.safe}>
+        <View style={h.header}>
+          <View style={h.headerLeft}>
+            <View style={h.brandMark}>
+              <SvgXml xml={AKSHAR_LOGO_SVG} width={18} height={18} color={T.orange} />
+            </View>
+            <Text style={h.headerTitle}>How it works</Text>
+          </View>
+          <TouchableOpacity
+            style={h.closeBtn}
+            onPress={onClose}
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Icon name="close" size={18} color={T.text} strokeWidth={2} />
+          </TouchableOpacity>
+        </View>
+        <View style={s.divider} />
+
+        <ScrollView
+          contentContainerStyle={h.scroll}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={h.hero}>Akshar for LIC, in four steps.</Text>
+          <Text style={h.heroSub}>
+            A field-agent workflow built for the pace of a real policyholder visit — every
+            form captured, extracted, and filed in under a minute.
+          </Text>
+
+          <View style={h.steps}>
+            {HOW_IT_WORKS_STEPS.map((step, idx) => (
+              <View key={step.num} style={h.stepRow}>
+                <View style={h.stepRail}>
+                  <View style={h.stepBadge}>
+                    <Icon name={step.icon} size={18} color={T.orange} strokeWidth={2} />
+                  </View>
+                  {idx < HOW_IT_WORKS_STEPS.length - 1 && <View style={h.stepLine} />}
+                </View>
+                <View style={h.stepBody}>
+                  <Text style={h.stepNum}>Step {step.num}</Text>
+                  <Text style={h.stepTitle}>{step.title}</Text>
+                  <Text style={h.stepText}>{step.body}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          <View style={h.noteCard}>
+            <Icon name="shield" size={16} color={T.orange} strokeWidth={2} />
+            <Text style={h.noteText}>
+              Visits stay on your device until you submit. Nothing is shared back to the
+              back-office without your review.
+            </Text>
+          </View>
+
+          <View style={{ height: SPACE.xxl }} />
+        </ScrollView>
+
+        <View style={h.footer}>
+          <TouchableOpacity style={h.footerBtn} onPress={onStart} activeOpacity={0.88}>
+            <Text style={h.footerBtnText}>Start a visit</Text>
+            <Icon name="arrow-right" size={16} color="#fff" strokeWidth={2.2} />
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </Modal>
   );
 }
 
@@ -321,5 +462,93 @@ const ind = StyleSheet.create({
     fontSize: 72, fontWeight: '400', color: T.text,
     letterSpacing: 4, textAlign: 'center',
     transform: [{ translateY: 18 }],
+  },
+});
+
+const h = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: T.bg },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: SPACE.lg, paddingTop: SPACE.md, paddingBottom: SPACE.md,
+  },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACE.sm },
+  brandMark: {
+    width: 28, height: 28, borderRadius: 8,
+    backgroundColor: T.orangeSoft,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 18, fontWeight: '600', color: T.text, letterSpacing: -0.3,
+  },
+  closeBtn: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: T.bgMuted,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  scroll: { paddingHorizontal: SPACE.lg, paddingTop: SPACE.lg },
+
+  hero: {
+    fontSize: 26, fontWeight: '700', color: T.text,
+    letterSpacing: -0.6, lineHeight: 32,
+  },
+  heroSub: {
+    fontSize: 14, color: T.textSoft,
+    marginTop: SPACE.sm, marginBottom: SPACE.xl,
+    lineHeight: 21,
+  },
+
+  steps: { gap: 0 },
+  stepRow: { flexDirection: 'row', gap: SPACE.md, paddingBottom: SPACE.lg },
+  stepRail: { alignItems: 'center', width: 32 },
+  stepBadge: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: T.orangeSoft,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  stepLine: {
+    flex: 1, width: 2, marginTop: 6,
+    backgroundColor: T.borderSoft,
+  },
+  stepBody: { flex: 1, paddingTop: 2 },
+  stepNum: {
+    fontSize: 11, fontWeight: '700', color: T.orange,
+    letterSpacing: 0.6, textTransform: 'uppercase',
+  },
+  stepTitle: {
+    fontSize: 17, fontWeight: '600', color: T.text,
+    letterSpacing: -0.3, marginTop: 2, marginBottom: 4,
+  },
+  stepText: {
+    fontSize: 14, color: T.textSoft, lineHeight: 21,
+  },
+
+  noteCard: {
+    flexDirection: 'row', gap: SPACE.sm,
+    backgroundColor: T.orangeSoft,
+    borderRadius: RADIUS.md,
+    padding: SPACE.md,
+    marginTop: SPACE.sm,
+  },
+  noteText: {
+    flex: 1, fontSize: 13, color: T.orangeText, lineHeight: 19,
+  },
+
+  footer: {
+    paddingHorizontal: SPACE.lg,
+    paddingTop: SPACE.md,
+    paddingBottom: SPACE.md,
+    borderTopWidth: 1,
+    borderTopColor: T.borderSoft,
+    backgroundColor: T.bg,
+  },
+  footerBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8,
+    backgroundColor: T.dark,
+    paddingVertical: 14, paddingHorizontal: 20,
+    borderRadius: RADIUS.pill,
+  },
+  footerBtnText: {
+    color: '#fff', fontSize: 15, fontWeight: '600', letterSpacing: -0.1,
   },
 });

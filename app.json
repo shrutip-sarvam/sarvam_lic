@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "Sarvam",
+    "slug": "sarvam",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "scheme": "sarvam",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f9730c"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Akshar needs camera access to photograph and digitise your documents.",
+        "NSPhotoLibraryUsageDescription": "Akshar accesses your photo library to pick documents for digitisation.",
+        "NSPhotoLibraryAddUsageDescription": "Akshar saves processed documents to your photo library."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1A1A2E"
+      },
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-camera",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Akshar accesses your photos to pick documents for digitisation."
+        }
+      ],
+      "expo-file-system"
+    ]
+  }
+}

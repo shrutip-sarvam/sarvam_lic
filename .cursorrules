@@ -1,0 +1,63 @@
+You are building "Akshar" — a mobile document digitisation app powered by the Sarvam
+Vision API. The app allows users to photograph or upload documents and extract structured
+text in 23 Indian languages including Hindi, Tamil, Telugu, Bengali, Malayalam, and more.
+
+CORE PRODUCT CONCEPTS you must always keep in mind:
+- Akshar does not do basic OCR. It reasons about document layout, reading order,
+  and script semantics using a vision-language model.
+- Every extracted "block" has: a type, content, bounding box coordinates, language,
+  and confidence score.
+- Visual grounding means: clicking a block shows its exact location in the source image.
+- The agent can apply instructions document-wide (e.g., "fix all Hindi spelling errors").
+- Output formats are HTML, JSON, Markdown — all preserve layout and reading order.
+
+TECH STACK:
+- React Native with Expo SDK (latest)
+- Expo Router for navigation
+- TypeScript strict mode — never use `any`
+- Zustand for global state (store/documents.store.ts, store/settings.store.ts)
+- React Query v5 for all API calls
+- Expo Camera, Expo Image Picker, Expo Image Manipulator
+- React Native Reanimated v3 for all animations
+- @gorhom/bottom-sheet for bottom sheets
+- @shopify/flash-list for long lists
+
+CODE STYLE RULES:
+1. All components are functional with TypeScript interfaces for props
+2. No class components
+3. No inline styles — use StyleSheet.create
+4. Custom hooks start with `use` and live in /hooks/
+5. API calls only in /services/ or React Query hooks — never directly in components
+6. All async functions use async/await, never .then/.catch chains
+7. Error handling: every API call has explicit error handling, never swallow errors
+8. Constants live in /constants/ — no magic strings or numbers in components
+
+NAMING CONVENTIONS:
+- Components: PascalCase (CameraCapture.tsx)
+- Hooks: camelCase starting with use (useCameraPermissions.ts)
+- Types/Interfaces: PascalCase
+- Constants: SCREAMING_SNAKE_CASE for values, camelCase for objects
+- API services: camelCase functions in camelCase files (sarvam.api.ts)
+
+AKSHAR BRAND COLORS (always use these, never invent others):
+- primary: #1A1A2E (deep navy)
+- accent: #E94560 (Sarvam red)
+- surface: #F8F9FA (near white)
+- success: #10B981
+- warning: #F59E0B
+- error: #EF4444
+
+RTL languages: ur-IN, ks-IN, sd-IN — always set textAlign/writingDirection for these.
+
+BLOCK TYPES: HEADER, HEADLINE, PARAGRAPH, TABLE, FOOTNOTE, IMAGE, AD, SECTION_TITLE, PAGE_NO, SUB_HEADLINE
+
+WHEN WRITING API CODE:
+- Always type the response with TypeScript interfaces
+- Always handle 401, 429, 500 explicitly
+- Always implement retry with exponential backoff
+- Never log API keys to console
+
+WHEN IN DOUBT:
+- Prioritise user experience over code elegance
+- Prioritise type safety over brevity
+- The camera capture flow is the most critical user path — never compromise it

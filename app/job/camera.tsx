@@ -139,10 +139,11 @@ export default function JobCameraScreen() {
 
   const handlePhotos = (uris: string[]) => {
     setDraftPhotos(uris);
+    // Always route to upload dialog so user confirms title / form type before processing
     if (returnTo === 'upload') {
       router.back();
     } else {
-      router.replace('/job/scan');
+      router.replace('/job/upload');
     }
   };
 
@@ -213,7 +214,7 @@ function NativeCameraScreen({ router, returnTo, setDraftPhotos }: { router: Retu
     if (returnTo === 'upload') {
       router.back();
     } else {
-      router.push('/job/scan');
+      router.push('/job/upload');
     }
   }, [photos, setDraftPhotos, router, returnTo]);
 

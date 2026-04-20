@@ -14,16 +14,36 @@ import { useJobsStore } from '../../store/jobs.store';
 import { Icon } from '../../components/ui/Icon';
 import { T, SPACE, RADIUS, FONT } from '../../components/ui/tokens';
 
+const LANGUAGES: { code: string; label: string; native?: string }[] = [
+  { code: 'en-IN', label: 'English' },
+  { code: 'hi-IN', label: 'Hindi', native: 'हिन्दी' },
+  { code: 'bn-IN', label: 'Bengali', native: 'বাংলা' },
+  { code: 'gu-IN', label: 'Gujarati', native: 'ગુજરાતી' },
+  { code: 'kn-IN', label: 'Kannada', native: 'ಕನ್ನಡ' },
+  { code: 'ml-IN', label: 'Malayalam', native: 'മലയാളം' },
+  { code: 'mr-IN', label: 'Marathi', native: 'मराठी' },
+  { code: 'or-IN', label: 'Odia', native: 'ଓଡ଼ିଆ' },
+  { code: 'pa-IN', label: 'Punjabi', native: 'ਪੰਜਾਬੀ' },
+  { code: 'ta-IN', label: 'Tamil', native: 'தமிழ்' },
+  { code: 'te-IN', label: 'Telugu', native: 'తెలుగు' },
+  { code: 'ur-IN', label: 'Urdu', native: 'اردو' },
+];
+
 export default function UploadDocumentScreen() {
   const router = useRouter();
-  const { draftPhotoUris, setDraftPhotos, setDraftMeta } = useJobsStore();
+  const { draftPhotoUris, draftLanguage, setDraftPhotos, setDraftMeta } = useJobsStore();
 
   const [photos, setPhotos] = useState<string[]>([]);
   const [fileUri, setFileUri] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [docTitle, setDocTitle] = useState('');
+  const [language, setLanguage] = useState<string>(draftLanguage || 'en-IN');
   const [uploading, setUploading] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
+
+  const languageLabel =
+    LANGUAGES.find((l) => l.code === language)?.label ?? 'English';
 
   // Pull in photos returned from camera screen
   useFocusEffect(
@@ -95,12 +115,12 @@ export default function UploadDocumentScreen() {
     if (!canUpload) { setPickerOpen(true); return; }
     setUploading(true);
     setDraftPhotos(allUris);
-    setDraftMeta(docTitle.trim() || 'Untitled Document', false);
+    setDraftMeta(docTitle.trim() || 'Untitled Document', false, language);
     setTimeout(() => {
       setUploading(false);
       router.replace('/job/scan');
     }, 200);
-  }, [canUpload, allUris, docTitle, setDraftPhotos, setDraftMeta, router]);
+  }, [canUpload, allUris, docTitle, language, setDraftPhotos, setDraftMeta, router]);
 
   const hasAttachment = photos.length > 0 || !!fileUri;
 
@@ -200,10 +220,14 @@ export default function UploadDocumentScreen() {
             </View>
             <View style={s.col}>
               <Text style={s.label}>Document Language</Text>
-              <View style={s.select}>
-                <Text style={s.selectText}>English</Text>
+              <TouchableOpacity
+                style={s.select}
+                onPress={() => setLangOpen(true)}
+                activeOpacity={0.75}
+              >
+                <Text style={s.selectText}>{languageLabel}</Text>
                 <Icon name="chevron-down" size={16} color={T.textMuted} />
-              </View>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -276,6 +300,63 @@ export default function UploadDocumentScreen() {
               activeOpacity={0.7}
             >
               <Text style={s.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Language picker */}
+      <Modal
+        visible={langOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLangOpen(false)}
+      >
+        <Pressable style={s.modalBack} onPress={() => setLangOpen(false)}>
+          <Pressable style={s.modalSheet} onPress={(e) => e.stopPropagation()}>
+            <View style={s.modalHandle} />
+            <Text style={s.modalTitle}>Document language</Text>
+            <Text style={s.modalSub}>Select the language of your LIC document</Text>
+
+            <ScrollView
+              style={s.langList}
+              contentContainerStyle={{ paddingBottom: SPACE.sm }}
+              showsVerticalScrollIndicator={false}
+            >
+              {LANGUAGES.map((l) => {
+                const selected = l.code === language;
+                return (
+                  <TouchableOpacity
+                    key={l.code}
+                    style={[s.langRow, selected && s.langRowSelected]}
+                    onPress={() => {
+                      setLanguage(l.code);
+                      setLangOpen(false);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.langName}>{l.label}</Text>
+                      {l.native ? (
+                        <Text style={s.langNative}>{l.native}</Text>
+                      ) : null}
+                    </View>
+                    {selected && (
+                      <View style={s.langCheck}>
+                        <Icon name="check" size={14} color="#fff" strokeWidth={2.4} />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            <TouchableOpacity
+              style={s.modalCancel}
+              onPress={() => setLangOpen(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={s.modalCancelText}>Close</Text>
             </TouchableOpacity>
           </Pressable>
         </Pressable>
@@ -419,4 +500,19 @@ const s = StyleSheet.create({
   modalOptionSub: { ...FONT.small, color: T.textMuted, marginTop: 2 },
   modalCancel: { paddingVertical: 14, alignItems: 'center', marginTop: SPACE.sm },
   modalCancelText: { ...FONT.bodyStrong, color: T.textMuted },
+
+  langList: { maxHeight: 380, marginTop: 4 },
+  langRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 12, paddingHorizontal: SPACE.md,
+    borderRadius: RADIUS.md, marginBottom: 4,
+  },
+  langRowSelected: { backgroundColor: T.orangeSoft },
+  langName: { ...FONT.bodyStrong, color: T.text, fontSize: 15 },
+  langNative: { ...FONT.small, color: T.textMuted, marginTop: 2 },
+  langCheck: {
+    width: 24, height: 24, borderRadius: 12,
+    backgroundColor: T.orange,
+    alignItems: 'center', justifyContent: 'center',
+  },
 });

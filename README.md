@@ -5,14 +5,10 @@
 ## Quick Start
 
 ```bash
-# 1. Install dependencies (already done)
+# 1. Install dependencies
 npm install
 
-# 2. Copy env file and add your Sarvam API key
-cp .env.example .env
-# Edit .env and set EXPO_PUBLIC_SARVAM_API_KEY
-
-# 3. Start Expo dev server
+# 2. Start Expo dev server
 npx expo start
 
 # Scan the QR code with Expo Go (Android/iOS) or run:
@@ -20,6 +16,12 @@ npm run android   # Android emulator
 npm run ios       # iOS simulator (macOS only)
 npm run web       # Browser
 ```
+
+The demo build ships without API keys and uses a deterministic mock for
+Vision extraction. To run against a real backend, edit the `SARVAM_BASE_URL`
+and add auth in `services/sarvam.api.ts` and `services/vision.api.ts`
+(recommended: route through a server-side proxy rather than embedding
+secrets in the client bundle).
 
 ## Tech Stack
 
@@ -54,13 +56,6 @@ akshar/
 ├── store/                  # documents.store.ts, settings.store.ts (Zustand)
 ├── types/                  # block.types.ts, api.types.ts
 └── constants/              # languages.ts (23 langs), theme.ts
-```
-
-## Environment Variables
-
-```env
-EXPO_PUBLIC_SARVAM_API_KEY=your_key_here
-EXPO_PUBLIC_SARVAM_API_BASE_URL=https://api.sarvam.ai
 ```
 
 ## Supported Languages

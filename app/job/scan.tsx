@@ -61,29 +61,21 @@ async function readBase64(uri: string): Promise<string> {
   } catch { return ''; }
 }
 
-async function scanImageWithVision(base64: string, handwritten = false): Promise<string> {
-  const apiBase = process.env.EXPO_PUBLIC_SARVAM_API_BASE_URL ?? 'https://api.sarvam.ai';
-  const apiKey = process.env.EXPO_PUBLIC_SARVAM_API_KEY ?? '';
-  if (!apiKey || apiKey === 'your_api_key_here') {
-    await new Promise((r) => setTimeout(r, 600));
-    return 'POLICY NO: 123456789\nLife Assured: Rajesh Kumar\nSum Assured: Rs. 5,00,000\nLIC of India Policy Document';
-  }
-  try {
-    const res = await fetch(`${apiBase}/v1/vision/parse`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'api-subscription-key': apiKey },
-      body: JSON.stringify({ image: base64, mime_type: 'image/jpeg', target_language: 'en-IN', extract_structure: true, handwritten }),
-    });
-    if (!res.ok) return '';
-    const data = await res.json();
-    return data?.raw_text ?? data?.blocks?.map((b: any) => b.text).join('\n') ?? '';
-  } catch { return ''; }
+async function scanImageWithVision(
+  _base64: string,
+  _handwritten = false,
+  _targetLanguage = 'en-IN',
+): Promise<string> {
+  // Demo build: uses a deterministic mock extraction.
+  // Wire a real Vision endpoint here when running against a live backend.
+  await new Promise((r) => setTimeout(r, 600));
+  return 'POLICY NO: 123456789\nLife Assured: Rajesh Kumar\nSum Assured: Rs. 5,00,000\nLIC of India Policy Document';
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 export default function ScanProcessingScreen() {
   const router = useRouter();
-  const { draftPhotoUris, draftHandwritten, setDraftExtracted } = useJobsStore();
+  const { draftPhotoUris, draftHandwritten, draftLanguage, setDraftExtracted } = useJobsStore();
   const [current, setCurrent] = useState(0);
   const [statusMsg, setStatusMsg] = useState('Reading document');
   const [done, setDone] = useState(false);
@@ -100,7 +92,7 @@ export default function ScanProcessingScreen() {
         setStatusMsg(`Scanning page ${i + 1} of ${draftPhotoUris.length}`);
         const b64 = await readBase64(draftPhotoUris[i]);
         if (b64) {
-          const text = await scanImageWithVision(b64, draftHandwritten);
+          const text = await scanImageWithVision(b64, draftHandwritten, draftLanguage);
           if (text) allText.push(text);
         }
       }

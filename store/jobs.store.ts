@@ -65,10 +65,11 @@ interface JobsState {
   draftExtracted: ExtractedData | null;
   draftDocTitle: string;
   draftHandwritten: boolean;
+  draftLanguage: string;
 
   setDraftPhotos: (uris: string[]) => void;
   setDraftExtracted: (data: ExtractedData) => void;
-  setDraftMeta: (docTitle: string, handwritten: boolean) => void;
+  setDraftMeta: (docTitle: string, handwritten: boolean, language?: string) => void;
   clearDraft: () => void;
 
   addJob: (data: Omit<Job, 'id' | 'createdAt' | 'status'>) => string;
@@ -84,11 +85,24 @@ export const useJobsStore = create<JobsState>()(
       draftExtracted: null,
       draftDocTitle: '',
       draftHandwritten: false,
+      draftLanguage: 'en-IN',
 
       setDraftPhotos: (uris) => set({ draftPhotoUris: uris }),
       setDraftExtracted: (data) => set({ draftExtracted: data }),
-      setDraftMeta: (docTitle, handwritten) => set({ draftDocTitle: docTitle, draftHandwritten: handwritten }),
-      clearDraft: () => set({ draftPhotoUris: [], draftExtracted: null, draftDocTitle: '', draftHandwritten: false }),
+      setDraftMeta: (docTitle, handwritten, language) =>
+        set((s) => ({
+          draftDocTitle: docTitle,
+          draftHandwritten: handwritten,
+          draftLanguage: language ?? s.draftLanguage,
+        })),
+      clearDraft: () =>
+        set({
+          draftPhotoUris: [],
+          draftExtracted: null,
+          draftDocTitle: '',
+          draftHandwritten: false,
+          draftLanguage: 'en-IN',
+        }),
 
       addJob: (data) => {
         const id = Date.now().toString();

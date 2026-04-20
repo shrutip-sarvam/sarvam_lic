@@ -3,9 +3,9 @@
  * Sends an image (camera scan or uploaded file) and returns structured text blocks.
  */
 
-const SARVAM_BASE_URL =
-  process.env.EXPO_PUBLIC_SARVAM_API_BASE_URL ?? 'https://api.sarvam.ai';
-const SARVAM_API_KEY = process.env.EXPO_PUBLIC_SARVAM_API_KEY ?? '';
+// Demo build ships without secrets. Point these at a real backend proxy when deploying.
+const SARVAM_BASE_URL = 'https://api.sarvam.ai';
+const SARVAM_API_KEY = '';
 
 export type BlockType = 'heading' | 'subheading' | 'paragraph' | 'bullet' | 'table' | 'code';
 

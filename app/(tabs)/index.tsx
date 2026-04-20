@@ -1,21 +1,20 @@
 /**
- * Home — Akshar-for-LIC dashboard.
- * Mirrors the Akshar (Tatva) welcome card: mandala logo thumbnail, semi-bold
- * heading, supportive description, four feature pills, and an Akshar-orange
- * primary CTA. Below: quick stats + Recent visits, in the spirit of the
- * Akshar dashboard "Recent" section.
+ * Home — Akshar web dashboard, ported 1:1 for mobile.
+ * Mirrors akshar-frontend/src/app/dashboard/page.tsx:
+ *  - Slim Header with "Home" title and avatar, divider below.
+ *  - Empty state: upload tile centered + "Welcome, {name}" + CTA buttons.
+ *  - Populated: "Welcome back, {name}!" + compact Upload Card + Recent list.
+ * Design tokens sourced from akshar-frontend globals.css (Tatva).
  */
 import React, { useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, FlatList,
   SafeAreaView, StatusBar, Image, Alert, ScrollView,
 } from 'react-native';
-import { SvgXml } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useJobsStore, type Job } from '../../store/jobs.store';
 import { Icon } from '../../components/ui/Icon';
 import { T, SPACE, RADIUS, FONT } from '../../components/ui/tokens';
-import { AKSHAR_LOGO_SVG } from '../../assets/akshar-logo';
 
 const STATUS_STYLE: Record<Job['status'], { bg: string; fg: string; label: string }> = {
   Pending: { bg: T.amberSoft, fg: T.amber, label: 'Pending' },
@@ -23,16 +22,7 @@ const STATUS_STYLE: Record<Job['status'], { bg: string; fg: string; label: strin
   Done: { bg: T.greenSoft, fg: T.green, label: 'Completed' },
 };
 
-const todayLabel = () =>
-  new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
-
-type FeatureIcon = 'shield' | 'sparkle' | 'eye' | 'check-circle';
-const FEATURES: { label: string; icon: FeatureIcon }[] = [
-  { label: 'Secure processing', icon: 'shield' },
-  { label: 'High-quality extraction', icon: 'sparkle' },
-  { label: 'Easy data review', icon: 'eye' },
-  { label: 'Automatic validations', icon: 'check-circle' },
-];
+const AGENT_NAME = 'Agent';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -48,106 +38,34 @@ export default function HomeScreen() {
     ]);
   }, [deleteJob]);
 
+  const isEmpty = jobs.length === 0;
+
   return (
     <SafeAreaView style={s.safe}>
       <StatusBar barStyle="dark-content" backgroundColor={T.bg} />
 
-      {/* Slim top bar — Akshar mandala + wordmark, no LIC pill */}
-      <View style={s.topBar}>
-        <View style={s.brandRow}>
-          <SvgXml xml={AKSHAR_LOGO_SVG} width={22} height={22} color={T.text} />
-          <Text style={s.brand}>Akshar</Text>
-        </View>
-        <TouchableOpacity style={s.avatar}>
-          <Text style={s.avatarText}>A</Text>
+      {/* Header — Tatva <Header type="main"> pattern: title left, action/avatar right, divider below */}
+      <View style={s.header}>
+        <Text style={s.headerTitle}>Home</Text>
+        <TouchableOpacity style={s.avatar} activeOpacity={0.8}>
+          <Text style={s.avatarText}>{AGENT_NAME[0]}</Text>
         </TouchableOpacity>
       </View>
+      <View style={s.divider} />
 
-      <ScrollView
-        contentContainerStyle={s.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Greeting */}
-        <Text style={s.today}>{todayLabel()}</Text>
-        <Text style={s.greeting}>Good morning, Agent.</Text>
+      {isEmpty ? (
+        <EmptyState onStart={handleStart} />
+      ) : (
+        <ScrollView
+          contentContainerStyle={s.scroll}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={s.welcome}>Welcome back, {AGENT_NAME}!</Text>
 
-        {/* Welcome / Upload card — mirrors Akshar Tatva Card */}
-        <View style={s.welcomeCard}>
-          <View style={s.welcomeHead}>
-            <View style={s.logoTile}>
-              <SvgXml xml={AKSHAR_LOGO_SVG} width={36} height={36} color={T.orange} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.welcomeTitle}>Akshar for LIC</Text>
-              <Text style={s.welcomeSub}>
-                Assist policyholders in the field with on-the-go scanning and upload.
-              </Text>
-            </View>
-          </View>
+          <UploadCard onPress={handleStart} />
 
-          {/* Feature pills */}
-          <View style={s.featureGrid}>
-            {FEATURES.map((f) => (
-              <View key={f.label} style={s.featurePill}>
-                <Icon name={f.icon} size={14} color={T.orange} strokeWidth={1.75} />
-                <Text style={s.featureText}>{f.label}</Text>
-              </View>
-            ))}
-          </View>
+          <Text style={s.recent}>Recent</Text>
 
-          {/* Primary CTA — Akshar orange */}
-          <TouchableOpacity activeOpacity={0.88} onPress={handleStart} style={s.cta}>
-            <Icon name="upload" size={18} color="#fff" strokeWidth={2} />
-            <Text style={s.ctaText}>Start new upload</Text>
-            <View style={s.ctaArrow}>
-              <Icon name="arrow-right" size={14} color="#fff" strokeWidth={2.2} />
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Quick stats row */}
-        <View style={s.statRow}>
-          <StatTile
-            label="Total"
-            value={jobs.length}
-            tint={T.text}
-            tintBg={T.bgMuted}
-          />
-          <StatTile
-            label="In progress"
-            value={jobs.filter((j) => j.status === 'In Progress').length}
-            tint={T.blue}
-            tintBg={T.blueSoft}
-          />
-          <StatTile
-            label="Completed"
-            value={jobs.filter((j) => j.status === 'Done').length}
-            tint={T.green}
-            tintBg={T.greenSoft}
-          />
-        </View>
-
-        {/* Recent visits */}
-        <View style={s.sectionHeader}>
-          <Text style={s.sectionTitle}>Recent</Text>
-          {jobs.length > 0 && (
-            <Text style={s.sectionCount}>
-              {jobs.length} {jobs.length === 1 ? 'visit' : 'visits'}
-            </Text>
-          )}
-        </View>
-
-        {jobs.length === 0 ? (
-          <View style={s.emptyCard}>
-            <View style={s.emptyIconWrap}>
-              <Icon name="file" size={26} color={T.textMuted} strokeWidth={1.5} />
-            </View>
-            <Text style={s.emptyTitle}>No visits yet</Text>
-            <Text style={s.emptySub}>
-              Your captured LIC forms will appear here once you finish an upload.
-            </Text>
-          </View>
-        ) : (
           <FlatList
             data={jobs}
             keyExtractor={(j) => j.id}
@@ -160,25 +78,56 @@ export default function HomeScreen() {
             scrollEnabled={false}
             ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
           />
-        )}
 
-        <View style={{ height: SPACE.xxl }} />
-      </ScrollView>
+          <View style={{ height: SPACE.xxl }} />
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
 
-function StatTile({
-  label, value, tint, tintBg,
-}: { label: string; value: number; tint: string; tintBg: string }) {
+/* ─── Empty state (mirrors Akshar's upload-page.svg + welcome) ──────────────── */
+function EmptyState({ onStart }: { onStart: () => void }) {
   return (
-    <View style={[stats.tile, { backgroundColor: tintBg }]}>
-      <Text style={[stats.value, { color: tint }]}>{value}</Text>
-      <Text style={stats.label}>{label}</Text>
+    <View style={e.root}>
+      <View style={e.tile}>
+        <View style={e.tileInner}>
+          <Icon name="upload" size={34} color="#fff" strokeWidth={2.2} />
+        </View>
+      </View>
+      <Text style={e.title}>Welcome, {AGENT_NAME}</Text>
+      <Text style={e.sub}>
+        Upload your document and{'\n'}get started with digitising
+      </Text>
+      <View style={e.ctaCol}>
+        <TouchableOpacity style={e.primary} onPress={onStart} activeOpacity={0.88}>
+          <Text style={e.primaryText}>Upload Document</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={e.secondary} activeOpacity={0.8}>
+          <Text style={e.secondaryText}>Learn How It Works</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
+/* ─── Upload card (mirrors Tatva <Card heading description image clickable />) ─ */
+function UploadCard({ onPress }: { onPress: () => void }) {
+  return (
+    <TouchableOpacity style={u.card} onPress={onPress} activeOpacity={0.88}>
+      <View style={u.thumb}>
+        <Icon name="upload" size={22} color="#fff" strokeWidth={2.2} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={u.heading}>Upload document</Text>
+        <Text style={u.desc}>Max size 200MB • PDF, JPEG, PNG, ZIP</Text>
+      </View>
+      <Icon name="chevron-right" size={18} color={T.textMuted} />
+    </TouchableOpacity>
+  );
+}
+
+/* ─── Recent visit card ─────────────────────────────────────────────────────── */
 function DocumentCard({ job, onDelete }: { job: Job; onDelete: () => void }) {
   const st = STATUS_STYLE[job.status];
   const date = new Date(job.createdAt);
@@ -220,17 +169,19 @@ function DocumentCard({ job, onDelete }: { job: Job; onDelete: () => void }) {
   );
 }
 
+/* ─── Styles ────────────────────────────────────────────────────────────────── */
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: T.bg },
 
-  topBar: {
+  header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: SPACE.lg, paddingVertical: SPACE.md,
-    borderBottomWidth: 1, borderBottomColor: T.borderSoft,
+    paddingHorizontal: SPACE.lg, paddingTop: SPACE.md, paddingBottom: SPACE.md,
     backgroundColor: T.bg,
   },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: SPACE.sm },
-  brand: { fontSize: 18, fontWeight: '600', color: T.text, letterSpacing: -0.3 },
+  headerTitle: {
+    fontSize: 22, fontWeight: '600', color: T.text,
+    letterSpacing: -0.4,
+  },
   avatar: {
     width: 36, height: 36, borderRadius: 18,
     backgroundColor: T.bgMuted,
@@ -238,113 +189,80 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: T.borderSoft,
   },
   avatarText: { ...FONT.bodyStrong, color: T.text },
+  divider: { height: 1, backgroundColor: T.borderSoft },
 
-  scroll: { paddingHorizontal: SPACE.lg, paddingTop: SPACE.xl },
+  scroll: { paddingHorizontal: SPACE.lg, paddingTop: SPACE.lg },
 
-  today: {
-    ...FONT.small, color: T.textMuted,
-    textTransform: 'uppercase', letterSpacing: 0.6, fontWeight: '600',
-  },
-  greeting: {
-    fontSize: 24, fontWeight: '600', color: T.text,
-    letterSpacing: -0.5, marginTop: 4, marginBottom: SPACE.xl,
+  welcome: {
+    fontSize: 20, fontWeight: '600', color: T.text,
+    letterSpacing: -0.3, marginBottom: SPACE.md,
   },
 
-  welcomeCard: {
+  recent: {
+    fontSize: 15, fontWeight: '600', color: T.text,
+    letterSpacing: -0.2, marginTop: SPACE.lg, marginBottom: SPACE.md,
+  },
+});
+
+const u = StyleSheet.create({
+  card: {
+    flexDirection: 'row', alignItems: 'center', gap: SPACE.md,
     backgroundColor: T.bgCard,
     borderRadius: RADIUS.lg,
     borderWidth: 1, borderColor: T.border,
-    padding: SPACE.lg,
-    gap: SPACE.md,
-    marginBottom: SPACE.xl,
+    padding: SPACE.md,
   },
-  welcomeHead: {
-    flexDirection: 'row', alignItems: 'center', gap: SPACE.md,
-  },
-  logoTile: {
-    width: 52, height: 52, borderRadius: RADIUS.md,
-    backgroundColor: T.orangeSoft,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  welcomeTitle: {
-    fontSize: 18, fontWeight: '600', color: T.text,
-    letterSpacing: -0.3,
-  },
-  welcomeSub: {
-    fontSize: 13, fontWeight: '400',
-    color: T.textSoft, marginTop: 3, lineHeight: 18,
-  },
-
-  featureGrid: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: 6,
-    marginTop: 2,
-  },
-  featurePill: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 10, paddingVertical: 6,
-    borderRadius: RADIUS.pill,
-    backgroundColor: T.orangeSoft,
-  },
-  featureText: {
-    fontSize: 12, fontWeight: '500',
-    color: T.orangeText,
-  },
-
-  cta: {
-    flexDirection: 'row', alignItems: 'center',
-    gap: SPACE.sm,
+  thumb: {
+    width: 56, height: 56, borderRadius: RADIUS.md,
     backgroundColor: T.orange,
-    borderRadius: RADIUS.md,
-    paddingVertical: 14, paddingHorizontal: SPACE.md,
-    marginTop: SPACE.xs,
-  },
-  ctaText: {
-    flex: 1,
-    fontSize: 15, fontWeight: '600',
-    color: '#fff', letterSpacing: -0.2,
-    marginLeft: 2,
-  },
-  ctaArrow: {
-    width: 26, height: 26, borderRadius: 13,
-    backgroundColor: 'rgba(255,255,255,0.22)',
     alignItems: 'center', justifyContent: 'center',
   },
-
-  statRow: { flexDirection: 'row', gap: SPACE.sm, marginBottom: SPACE.xl },
-
-  sectionHeader: {
-    flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between',
-    marginBottom: SPACE.md,
-  },
-  sectionTitle: { ...FONT.h3, color: T.text, fontSize: 17, fontWeight: '600' },
-  sectionCount: { ...FONT.small, color: T.textMuted },
-
-  emptyCard: {
-    paddingVertical: SPACE.xxl, paddingHorizontal: SPACE.lg,
-    alignItems: 'center',
-    backgroundColor: T.bgMuted,
-    borderRadius: RADIUS.lg,
-    gap: SPACE.sm,
-  },
-  emptyIconWrap: {
-    width: 52, height: 52, borderRadius: 26,
-    backgroundColor: T.bg,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: T.borderSoft,
-  },
-  emptyTitle: { ...FONT.h3, color: T.text, marginTop: SPACE.sm },
-  emptySub: { ...FONT.small, color: T.textMuted, textAlign: 'center', maxWidth: 280, lineHeight: 18 },
+  heading: { fontSize: 15, fontWeight: '600', color: T.text, letterSpacing: -0.2 },
+  desc: { ...FONT.small, color: T.textMuted, marginTop: 3 },
 });
 
-const stats = StyleSheet.create({
-  tile: {
-    flex: 1,
-    paddingVertical: SPACE.md, paddingHorizontal: SPACE.md,
-    borderRadius: RADIUS.md,
-    gap: 2,
+const e = StyleSheet.create({
+  root: {
+    flex: 1, alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: SPACE.lg, paddingBottom: 64,
   },
-  value: { fontSize: 22, fontWeight: '700', letterSpacing: -0.5 },
-  label: { ...FONT.tiny, color: T.textSoft, fontWeight: '600' },
+  tile: {
+    width: 96, height: 96, borderRadius: RADIUS.xl,
+    backgroundColor: T.orange,
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: SPACE.lg,
+  },
+  tileInner: {
+    width: 62, height: 62, borderRadius: 31,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  title: {
+    fontSize: 22, fontWeight: '600', color: T.text,
+    letterSpacing: -0.4, textAlign: 'center',
+  },
+  sub: {
+    ...FONT.body, color: T.textSoft,
+    marginTop: SPACE.sm, marginBottom: SPACE.xl,
+    textAlign: 'center', lineHeight: 20,
+  },
+  ctaCol: { gap: SPACE.sm, width: '100%', alignItems: 'center' },
+  primary: {
+    backgroundColor: T.orange,
+    paddingHorizontal: 28, paddingVertical: 13,
+    borderRadius: RADIUS.pill,
+    alignItems: 'center', justifyContent: 'center',
+    minWidth: 200,
+  },
+  primaryText: { color: '#fff', ...FONT.bodyStrong, fontSize: 15 },
+  secondary: {
+    backgroundColor: T.bg,
+    borderWidth: 1, borderColor: T.border,
+    paddingHorizontal: 28, paddingVertical: 13,
+    borderRadius: RADIUS.pill,
+    alignItems: 'center', justifyContent: 'center',
+    minWidth: 200,
+  },
+  secondaryText: { color: T.text, ...FONT.bodyStrong, fontSize: 15 },
 });
 
 const c = StyleSheet.create({

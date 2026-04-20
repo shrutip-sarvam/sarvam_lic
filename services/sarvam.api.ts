@@ -6,8 +6,9 @@ import {
   JobStatusResponse,
 } from '../types/api.types';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_SARVAM_API_BASE_URL ?? 'https://api.sarvam.ai';
-const API_KEY = process.env.EXPO_PUBLIC_SARVAM_API_KEY ?? '';
+// Demo build ships without secrets. Point these at a real backend proxy when deploying.
+const API_BASE_URL = 'https://api.sarvam.ai';
+const API_KEY = '';
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 5 * 60 * 1000;

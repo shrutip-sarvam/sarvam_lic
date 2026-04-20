@@ -164,7 +164,7 @@ function DocumentCard({ job, onDelete }: { job: Job; onDelete: () => void }) {
             <Text style={[c.statusText, { color: st.fg }]}>{st.label}</Text>
           </View>
         </View>
-        <Text style={c.formType}>LIC Proposal Form</Text>
+        <Text style={c.formType}>LIC Claim Form</Text>
         {job.policyNumber ? (
           <Text style={c.policy} numberOfLines={1}>Policy #{job.policyNumber}</Text>
         ) : null}

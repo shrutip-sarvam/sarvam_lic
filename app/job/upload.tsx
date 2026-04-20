@@ -191,7 +191,7 @@ export default function UploadDocumentScreen() {
               <Text style={s.label}>Document Title</Text>
               <TextInput
                 style={s.input}
-                placeholder="e.g. Mahabharath"
+                placeholder="e.g. Rajesh Kumar — Policy 895432"
                 placeholderTextColor={T.textFaint}
                 value={docTitle}
                 onChangeText={setDocTitle}
@@ -209,9 +209,11 @@ export default function UploadDocumentScreen() {
 
           <View style={s.field}>
             <Text style={s.label}>Form Type</Text>
-            <View style={s.select}>
-              <Text style={s.selectText}>LIC Proposal Form</Text>
-              <Icon name="chevron-down" size={16} color={T.textMuted} />
+            <View style={s.formTypePill}>
+              <View style={s.formTypeIcon}>
+                <Icon name="file" size={14} color={T.orange} strokeWidth={1.75} />
+              </View>
+              <Text style={s.formTypeText}>LIC Claim Form</Text>
             </View>
           </View>
 
@@ -360,6 +362,21 @@ const s = StyleSheet.create({
     backgroundColor: T.bg,
   },
   selectText: { ...FONT.body, color: T.text },
+
+  formTypePill: {
+    flexDirection: 'row', alignItems: 'center', gap: SPACE.sm,
+    alignSelf: 'flex-start',
+    backgroundColor: T.orangeSoft,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACE.md, paddingVertical: 9,
+    borderWidth: 1, borderColor: T.orangeSoft,
+  },
+  formTypeIcon: {
+    width: 22, height: 22, borderRadius: 11,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  formTypeText: { ...FONT.bodyStrong, color: T.orangeText, fontSize: 14 },
 
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: SPACE.sm, marginTop: 4 },
   cancelBtn: {

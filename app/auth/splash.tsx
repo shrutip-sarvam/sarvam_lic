@@ -1,68 +1,39 @@
+/**
+ * Splash — fast, clean, matches Akshar aesthetic.
+ * White background, simple wordmark. 1.2s max before redirecting.
+ */
 import React, { useEffect } from 'react';
-import { View, Image, StyleSheet, StatusBar } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet, StatusBar, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withDelay,
-} from 'react-native-reanimated';
-import { SARVAM_MONOGRAM_WHITE, SARVAM_WORDMARK_WHITE } from '../../assets/sarvam-logo';
+import { T, FONT, RADIUS } from '../../components/ui/tokens';
 
 export default function SplashScreen() {
   const router = useRouter();
-  const logoOpacity = useSharedValue(0);
-  const logoScale = useSharedValue(0.82);
-  const wordmarkOpacity = useSharedValue(0);
-  const wordmarkY = useSharedValue(12);
 
   useEffect(() => {
-    logoOpacity.value = withDelay(200, withTiming(1, { duration: 600 }));
-    logoScale.value = withDelay(200, withTiming(1, { duration: 700 }));
-    wordmarkOpacity.value = withDelay(500, withTiming(1, { duration: 500 }));
-    wordmarkY.value = withDelay(500, withTiming(0, { duration: 500 }));
-    const timer = setTimeout(() => router.replace('/auth/sign-in'), 2600);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const logoStyle = useAnimatedStyle(() => ({
-    opacity: logoOpacity.value,
-    transform: [{ scale: logoScale.value }],
-  }));
-
-  const wordmarkStyle = useAnimatedStyle(() => ({
-    opacity: wordmarkOpacity.value,
-    transform: [{ translateY: wordmarkY.value }],
-  }));
+    const t = setTimeout(() => router.replace('/auth/sign-in'), Platform.OS === 'web' ? 600 : 1000);
+    return () => clearTimeout(t);
+  }, [router]);
 
   return (
     <View style={s.root}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <LinearGradient
-        colors={['#040810', '#0a1530', '#142660', '#1e4090', '#4878c8', '#a8c4e8', '#ddb890', '#e87828']}
-        locations={[0, 0.12, 0.25, 0.40, 0.56, 0.70, 0.84, 1]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <View style={s.center}>
-        <Animated.View style={[s.logoWrap, logoStyle]}>
-          <Image source={SARVAM_MONOGRAM_WHITE} style={s.logo} resizeMode="contain" />
-        </Animated.View>
-        <Animated.View style={[s.wordmarkWrap, wordmarkStyle]}>
-          <Image source={SARVAM_WORDMARK_WHITE} style={s.wordmark} resizeMode="contain" />
-        </Animated.View>
+        <Text style={s.brand}>sarvam</Text>
+        <View style={s.badge}>
+          <Text style={s.badgeText}>for LIC</Text>
+        </View>
       </View>
+      <Text style={s.footer}>Document intelligence · powered by Sarvam AI</Text>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  center: { alignItems: 'center', gap: 24 },
-  logoWrap: {},
-  logo: { width: 120, height: 120 },
-  wordmarkWrap: {},
-  wordmark: { width: 200, height: 48 },
+  root: { flex: 1, backgroundColor: T.bg, alignItems: 'center', justifyContent: 'center' },
+  center: { alignItems: 'center', gap: 10 },
+  brand: { fontSize: 44, fontWeight: '800', color: T.text, letterSpacing: -1.2 },
+  badge: { backgroundColor: T.orangeSoft, borderRadius: RADIUS.pill, paddingHorizontal: 14, paddingVertical: 5 },
+  badgeText: { ...FONT.small, color: T.orangeText, fontWeight: '700' },
+  footer: { position: 'absolute', bottom: 44, ...FONT.tiny, color: T.textFaint, letterSpacing: 0.3 },
 });

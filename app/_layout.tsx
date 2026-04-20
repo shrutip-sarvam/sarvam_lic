@@ -55,10 +55,6 @@ export default function RootLayout() {
             <Stack.Screen name="auth/name" />
             <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
             <Stack.Screen
-              name="scan"
-              options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
-            />
-            <Stack.Screen
               name="job/camera"
               options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', headerShown: false }}
             />

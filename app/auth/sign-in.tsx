@@ -1,42 +1,12 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
-  StatusBar,
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  SafeAreaView, KeyboardAvoidingView, Platform, StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { impact } from '../../utils/haptics';
-
-// Progress dots — step 1 of 3
-function ProgressDots({ step }: { step: number }) {
-  return (
-    <View style={dots.row}>
-      {[0, 1, 2].map((i) => (
-        <View
-          key={i}
-          style={[
-            dots.dot,
-            i === step ? dots.active : dots.inactive,
-          ]}
-        />
-      ))}
-    </View>
-  );
-}
-
-const dots = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 6, alignItems: 'center' },
-  dot: { height: 8, borderRadius: 100 },
-  active: { width: 40, backgroundColor: '#a5bbfc' },
-  inactive: { width: 4, height: 4, backgroundColor: 'rgba(165,187,252,0.75)' },
-});
+import { Icon } from '../../components/ui/Icon';
+import { T, SPACE, RADIUS, FONT } from '../../components/ui/tokens';
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -45,126 +15,92 @@ export default function SignInScreen() {
 
   const handleContinue = async () => {
     if (!isValid) return;
-    await impact("Light");
+    await impact('Light');
     router.push({ pathname: '/auth/otp', params: { phone } });
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" />
+    <SafeAreaView style={s.safe}>
+      <StatusBar barStyle="dark-content" backgroundColor={T.bg} />
       <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={styles.content}>
-          {/* Back + progress */}
-          <View style={styles.topRow}>
-            <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
-              <Text style={styles.backArrow}>‹</Text>
-            </TouchableOpacity>
-            <ProgressDots step={0} />
+        <View style={s.content}>
+          <View style={s.brandRow}>
+            <Text style={s.brand}>sarvam</Text>
+            <View style={s.badge}><Text style={s.badgeText}>for LIC</Text></View>
           </View>
 
-          {/* Heading */}
-          <View style={styles.headingGroup}>
-            <Text style={styles.heading}>Get started</Text>
-            <Text style={styles.subheading}>
-              Please share your mobile number to create your account
-            </Text>
+          <View style={{ gap: SPACE.sm }}>
+            <Text style={s.heading}>Sign in</Text>
+            <Text style={s.sub}>Enter your mobile number to continue</Text>
           </View>
 
-          {/* Phone input row */}
-          <View style={styles.inputRow}>
-            <View style={styles.countryCode}>
-              <Text style={styles.countryText}>+91</Text>
-            </View>
+          <View style={s.inputRow}>
+            <View style={s.countryCode}><Text style={s.countryText}>+91</Text></View>
             <TextInput
-              style={styles.phoneInput}
+              style={s.phoneInput}
               value={phone}
               onChangeText={setPhone}
               placeholder="Mobile number"
-              placeholderTextColor="#b5b5b5"
+              placeholderTextColor={T.textFaint}
               keyboardType="phone-pad"
               maxLength={10}
               autoFocus
-              accessibilityLabel="Mobile number input"
             />
           </View>
         </View>
 
-        {/* Continue button — dark radial pill */}
-        <View style={styles.footer}>
+        <View style={s.footer}>
           <TouchableOpacity
-            style={[styles.continueBtn, !isValid && styles.continueBtnDisabled]}
+            style={[s.continueBtn, !isValid && s.continueDisabled]}
             onPress={handleContinue}
             disabled={!isValid}
-            accessibilityRole="button"
-            accessibilityLabel="Continue"
+            activeOpacity={0.88}
           >
-            <LinearGradient
-              colors={['#353535', '#242424', '#131313', '#242424', '#353535']}
-              style={[StyleSheet.absoluteFill, styles.continueBtnGradient]}
-            />
-            <Text style={styles.continueText}>Continue</Text>
-            <Text style={styles.continueArrow}>→</Text>
+            <Text style={s.continueText}>Continue</Text>
+            <Icon name="arrow-right" size={18} color="#fff" />
           </TouchableOpacity>
+          <Text style={s.terms}>
+            By continuing, you agree to Sarvam's Terms & Privacy Policy
+          </Text>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#ffffff' },
-  flex: { flex: 1 },
-  content: { flex: 1, paddingHorizontal: 24, paddingTop: 12, gap: 32 },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
-  },
-  backBtn: { padding: 4 },
-  backArrow: { fontSize: 28, color: '#131313', lineHeight: 32 },
-  headingGroup: { gap: 12 },
-  heading: { fontSize: 24, fontWeight: '600', color: '#131313', lineHeight: 24 * 1.4 },
-  subheading: { fontSize: 16, color: '#a5a5a5', lineHeight: 16 * 1.45, width: 268 },
-  inputRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: T.bg },
+  content: { flex: 1, paddingHorizontal: SPACE.xl, paddingTop: SPACE.xl, gap: SPACE.xxl },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: SPACE.sm },
+  brand: { fontSize: 28, fontWeight: '800', color: T.text, letterSpacing: -0.8 },
+  badge: { backgroundColor: T.orangeSoft, borderRadius: RADIUS.pill, paddingHorizontal: 10, paddingVertical: 3 },
+  badgeText: { ...FONT.tiny, color: T.orangeText, fontWeight: '700' },
+
+  heading: { ...FONT.h1, color: T.text },
+  sub: { ...FONT.body, color: T.textMuted },
+
+  inputRow: { flexDirection: 'row', gap: SPACE.sm, alignItems: 'center' },
   countryCode: {
-    borderWidth: 1,
-    borderColor: '#ededed',
-    borderRadius: 999,
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    height: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1, borderColor: T.border, borderRadius: RADIUS.pill,
+    paddingHorizontal: 20, height: 52,
+    alignItems: 'center', justifyContent: 'center',
   },
-  countryText: { fontSize: 20, fontWeight: '600', color: '#131313', letterSpacing: 0.1 },
+  countryText: { fontSize: 17, fontWeight: '600', color: T.text },
   phoneInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#ededed',
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    height: 52,
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#131313',
-    letterSpacing: 0.1,
+    flex: 1, borderWidth: 1, borderColor: T.border, borderRadius: RADIUS.pill,
+    paddingHorizontal: 20, height: 52,
+    fontSize: 17, fontWeight: '500', color: T.text,
   },
-  footer: { paddingHorizontal: 24, paddingBottom: 24 },
+
+  footer: { paddingHorizontal: SPACE.xl, paddingBottom: SPACE.xl, gap: SPACE.md },
   continueBtn: {
-    borderRadius: 999,
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    overflow: 'hidden',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    backgroundColor: T.dark, borderRadius: RADIUS.pill, height: 54,
   },
-  continueBtnGradient: { borderRadius: 999 },
-  continueBtnDisabled: { opacity: 0.35 },
-  continueText: { fontSize: 16, color: '#ffffff', fontWeight: '400' },
-  continueArrow: { fontSize: 18, color: '#ffffff' },
+  continueDisabled: { backgroundColor: T.textFaint },
+  continueText: { color: '#fff', ...FONT.bodyStrong, fontSize: 16 },
+  terms: { ...FONT.tiny, color: T.textFaint, textAlign: 'center', paddingHorizontal: 16 },
 });

@@ -1,34 +1,21 @@
+/**
+ * Camera — multi-photo capture for LIC documents.
+ * Clean Akshar aesthetic, no emojis. Works on both web and native.
+ */
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  Image,
-  Alert,
-  StatusBar,
-  Animated,
-  Dimensions,
-  Platform,
+  View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView,
+  Image, Alert, StatusBar, Animated, Platform,
 } from 'react-native';
-
-import { LinearGradient } from 'expo-linear-gradient';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImageManipulator from 'expo-image-manipulator';
-import * as ImagePicker from 'expo-image-picker';
-import * as Haptics from 'expo-haptics';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useJobsStore } from '../../store/jobs.store';
+import { impact } from '../../utils/haptics';
+import { Icon } from '../../components/ui/Icon';
+import { T, SPACE, RADIUS, FONT } from '../../components/ui/tokens';
 
-const { height: SCREEN_H } = Dimensions.get('window');
-import { getSarvamLogoUri, getSarvamLogoGradientUri } from '../../assets/sarvam-logo';
-
-const HERO_COLORS = ['#040810', '#0a1530', '#142660', '#1e4090', '#4878c8', '#a8c4e8', '#ddb890', '#e87828'] as const;
-const HERO_LOCS = [0, 0.12, 0.25, 0.40, 0.56, 0.70, 0.84, 1] as const;
-
-// ── Web camera: uses <input type="file" capture> — works on HTTP, no permissions hang ──
+// ─── Web fallback (uses <input type=file capture=environment>) ───────────────
 function WebCameraScreen({ onPhotos, onCancel }: { onPhotos: (uris: string[]) => void; onCancel: () => void }) {
   const [photos, setPhotos] = useState<string[]>([]);
 
@@ -57,81 +44,131 @@ function WebCameraScreen({ onPhotos, onCancel }: { onPhotos: (uris: string[]) =>
   }, [photos, onPhotos]);
 
   return (
-    <View style={w.root}>
-      <StatusBar barStyle="dark-content" />
-      <LinearGradient colors={HERO_COLORS} locations={HERO_LOCS} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={w.hero}>
-        <SafeAreaView style={w.heroInner}>
-          <Image source={{ uri: getSarvamLogoGradientUri() }} style={w.logo} resizeMode="contain" />
-          <Text style={w.heroTitle}>Scan Document</Text>
-          <Text style={w.heroSub}>Take photos of LIC policy documents</Text>
-        </SafeAreaView>
-      </LinearGradient>
-
-      <View style={w.card}>
-        <View style={w.cardHandle} />
-        <ScrollView contentContainerStyle={w.panel} showsVerticalScrollIndicator={false}>
-          {photos.length > 0 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }} contentContainerStyle={{ gap: 10, paddingHorizontal: 4 }}>
-              {photos.map((uri, i) => (
-                <TouchableOpacity key={i} onLongPress={() => removePhoto(i)} style={{ position: 'relative' }}>
-                  <Image source={{ uri }} style={w.thumb} />
-                  <View style={w.thumbBadge}><Text style={w.thumbBadgeText}>{i + 1}</Text></View>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
-
-          <TouchableOpacity style={w.cameraBtn} onPress={openCamera} activeOpacity={0.85}>
-            <Text style={w.cameraBtnIcon}>📷</Text>
-            <Text style={w.cameraBtnText}>{photos.length === 0 ? 'Open Camera' : 'Add Another Photo'}</Text>
-          </TouchableOpacity>
-
-          {photos.length > 0 && (
-            <TouchableOpacity style={w.doneBtn} onPress={handleDone} activeOpacity={0.88}>
-              <Text style={w.doneBtnText}>Continue with {photos.length} {photos.length === 1 ? 'Photo' : 'Photos'}</Text>
-              <View style={w.doneArrow}><Text style={{ color: '#fff', fontSize: 16 }}>→</Text></View>
-            </TouchableOpacity>
-          )}
-
-          <TouchableOpacity style={w.cancelLink} onPress={onCancel}>
-            <Text style={w.cancelLinkText}>Cancel</Text>
-          </TouchableOpacity>
-        </ScrollView>
+    <SafeAreaView style={w.safe}>
+      <StatusBar barStyle="dark-content" backgroundColor={T.bg} />
+      <View style={w.topBar}>
+        <TouchableOpacity style={w.iconBtn} onPress={onCancel}>
+          <Icon name="close" size={22} color={T.text} />
+        </TouchableOpacity>
+        <Text style={w.topTitle}>Capture Documents</Text>
+        <TouchableOpacity
+          style={[w.doneBtnTop, photos.length === 0 && w.doneBtnTopDisabled]}
+          onPress={handleDone}
+          disabled={photos.length === 0}
+        >
+          <Text style={[w.doneBtnTopText, photos.length === 0 && { color: T.textFaint }]}>
+            Done
+          </Text>
+        </TouchableOpacity>
       </View>
-    </View>
+
+      <ScrollView contentContainerStyle={w.scroll} showsVerticalScrollIndicator={false}>
+        <Text style={w.heading}>Photograph your LIC document</Text>
+        <Text style={w.sub}>Capture each page clearly. All photos group into one upload.</Text>
+
+        {photos.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={w.thumbStrip}
+            style={{ marginBottom: SPACE.lg }}
+          >
+            {photos.map((uri, i) => (
+              <View key={i} style={w.thumbWrap}>
+                <Image source={{ uri }} style={w.thumb} />
+                <TouchableOpacity style={w.thumbRemove} onPress={() => removePhoto(i)}>
+                  <Icon name="close" size={10} color="#fff" strokeWidth={2} />
+                </TouchableOpacity>
+                <View style={w.thumbBadge}><Text style={w.thumbBadgeText}>{i + 1}</Text></View>
+              </View>
+            ))}
+          </ScrollView>
+        )}
+
+        <TouchableOpacity style={w.captureBtn} onPress={openCamera} activeOpacity={0.75}>
+          <View style={w.captureIconBox}>
+            <Icon name="camera" size={24} color={T.orange} strokeWidth={1.75} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={w.captureTitle}>
+              {photos.length === 0 ? 'Open Camera' : 'Add Another Page'}
+            </Text>
+            <Text style={w.captureSub}>
+              {photos.length === 0 ? 'Take a photo of the document' : `${photos.length} captured · tap to add more`}
+            </Text>
+          </View>
+          <Icon name="chevron-right" size={18} color={T.textMuted} />
+        </TouchableOpacity>
+
+        {photos.length > 0 && (
+          <TouchableOpacity style={w.continueBtn} onPress={handleDone} activeOpacity={0.88}>
+            <Text style={w.continueBtnText}>
+              Continue with {photos.length} {photos.length === 1 ? 'page' : 'pages'}
+            </Text>
+            <Icon name="arrow-right" size={18} color="#fff" />
+          </TouchableOpacity>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const w = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#e87828' },
-  hero: { height: Math.round(SCREEN_H * 0.40) },
-  heroInner: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 8 },
-  logo: { width: 100, height: 100 },
-  heroTitle: { fontSize: 26, fontWeight: '800', color: '#fff', letterSpacing: -0.5, marginTop: 14 },
-  heroSub: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 6, textAlign: 'center', paddingHorizontal: 32 },
-  card: { flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, marginTop: -24, elevation: 12 },
-  cardHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#E0E0E0', alignSelf: 'center', marginTop: 12, marginBottom: 4 },
-  panel: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 48 },
-  thumb: { width: 80, height: 80, borderRadius: 12, borderWidth: 2, borderColor: '#E0E0E0' },
-  thumbBadge: { position: 'absolute', top: 4, right: 4, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 8, paddingHorizontal: 5, paddingVertical: 1 },
-  thumbBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  cameraBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
-    borderWidth: 2, borderColor: '#E0E0E0', borderRadius: 16, borderStyle: 'dashed',
-    paddingVertical: 24, marginBottom: 16,
+  safe: { flex: 1, backgroundColor: T.bg },
+  topBar: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: SPACE.md, paddingVertical: SPACE.md,
+    borderBottomWidth: 1, borderBottomColor: T.borderSoft,
   },
-  cameraBtnIcon: { fontSize: 28 },
-  cameraBtnText: { fontSize: 17, fontWeight: '600', color: '#333' },
-  doneBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#111', borderRadius: 16, paddingHorizontal: 22, paddingVertical: 18, marginBottom: 12,
+  iconBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  topTitle: { flex: 1, ...FONT.h3, color: T.text, textAlign: 'center' },
+  doneBtnTop: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: RADIUS.pill, backgroundColor: T.dark },
+  doneBtnTopDisabled: { backgroundColor: T.bgMuted },
+  doneBtnTopText: { color: '#fff', ...FONT.bodyStrong },
+
+  scroll: { padding: SPACE.lg, paddingBottom: SPACE.xxl },
+  heading: { ...FONT.h2, color: T.text, marginBottom: 6 },
+  sub: { ...FONT.body, color: T.textMuted, marginBottom: SPACE.xl },
+
+  thumbStrip: { gap: SPACE.sm, paddingVertical: 4 },
+  thumbWrap: { position: 'relative' },
+  thumb: { width: 84, height: 84, borderRadius: RADIUS.md, borderWidth: 1, borderColor: T.border },
+  thumbRemove: {
+    position: 'absolute', top: -6, right: -6,
+    width: 20, height: 20, borderRadius: 10,
+    backgroundColor: T.red, alignItems: 'center', justifyContent: 'center',
   },
-  doneBtnText: { fontSize: 16, color: '#fff', fontWeight: '700' },
-  doneArrow: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
-  cancelLink: { alignItems: 'center', paddingVertical: 14 },
-  cancelLinkText: { fontSize: 15, color: '#999' },
+  thumbBadge: {
+    position: 'absolute', bottom: 4, left: 4,
+    backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 6,
+    paddingHorizontal: 5, paddingVertical: 1,
+  },
+  thumbBadgeText: { color: '#fff', ...FONT.tiny, fontWeight: '700' },
+
+  captureBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: SPACE.md,
+    borderWidth: 1.5, borderColor: T.borderStrong, borderStyle: 'dashed',
+    borderRadius: RADIUS.lg,
+    paddingHorizontal: SPACE.lg, paddingVertical: SPACE.lg,
+    marginBottom: SPACE.md,
+  },
+  captureIconBox: {
+    width: 48, height: 48, borderRadius: RADIUS.md,
+    backgroundColor: T.orangeSoft,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  captureTitle: { ...FONT.h3, color: T.text },
+  captureSub: { ...FONT.small, color: T.textMuted, marginTop: 2 },
+
+  continueBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    backgroundColor: T.dark, borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACE.lg, paddingVertical: 14,
+  },
+  continueBtnText: { color: '#fff', ...FONT.bodyStrong },
 });
 
+// ─── Entry point ─────────────────────────────────────────────────────────────
 export default function JobCameraScreen() {
   const router = useRouter();
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
@@ -139,27 +176,21 @@ export default function JobCameraScreen() {
 
   const handlePhotos = (uris: string[]) => {
     setDraftPhotos(uris);
-    // Always route to upload dialog so user confirms title / form type before processing
-    if (returnTo === 'upload') {
-      router.back();
-    } else {
-      router.replace('/job/upload');
-    }
+    if (returnTo === 'upload') router.back();
+    else router.replace('/job/upload');
   };
 
   if (Platform.OS === 'web') {
-    return (
-      <WebCameraScreen
-        onPhotos={handlePhotos}
-        onCancel={() => router.back()}
-      />
-    );
+    return <WebCameraScreen onPhotos={handlePhotos} onCancel={() => router.back()} />;
   }
 
   return <NativeCameraScreen router={router} returnTo={returnTo} setDraftPhotos={setDraftPhotos} />;
 }
 
-function NativeCameraScreen({ router, returnTo, setDraftPhotos }: { router: ReturnType<typeof useRouter>; returnTo?: string; setDraftPhotos: (photos: string[]) => void }) {
+// ─── Native camera ───────────────────────────────────────────────────────────
+function NativeCameraScreen({
+  router, returnTo, setDraftPhotos,
+}: { router: ReturnType<typeof useRouter>; returnTo?: string; setDraftPhotos: (p: string[]) => void }) {
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [photos, setPhotos] = useState<string[]>([]);
@@ -176,12 +207,12 @@ function NativeCameraScreen({ router, returnTo, setDraftPhotos }: { router: Retu
     if (capturing || !cameraRef.current) return;
     setCapturing(true);
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impact('Medium');
       Animated.sequence([
         Animated.timing(flashAnim, { toValue: 0.8, duration: 60, useNativeDriver: true }),
         Animated.timing(flashAnim, { toValue: 0, duration: 120, useNativeDriver: true }),
       ]).start();
-      const photo = await cameraRef.current.takePictureAsync({ quality: 0.85, base64: false });
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.85 });
       if (photo?.uri) {
         const resized = await ImageManipulator.manipulateAsync(
           photo.uri,
@@ -189,7 +220,6 @@ function NativeCameraScreen({ router, returnTo, setDraftPhotos }: { router: Retu
           { compress: 0.82, format: ImageManipulator.SaveFormat.JPEG }
         );
         setPhotos((prev) => [...prev, resized.uri]);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
     } catch {
       Alert.alert('Error', 'Could not capture photo. Please try again.');
@@ -199,28 +229,22 @@ function NativeCameraScreen({ router, returnTo, setDraftPhotos }: { router: Retu
   }, [capturing]);
 
   const removePhoto = useCallback((index: number) => {
-    Alert.alert('Remove Photo', 'Remove this photo?', [
+    Alert.alert('Remove Page', 'Remove this page?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Remove', style: 'destructive', onPress: () => setPhotos((p) => p.filter((_, i) => i !== index)) },
     ]);
   }, []);
 
   const handleDone = useCallback(() => {
-    if (photos.length === 0) {
-      Alert.alert('No Photos', 'Take at least one photo first.');
-      return;
-    }
+    if (photos.length === 0) { Alert.alert('No Photos', 'Capture at least one page first.'); return; }
     setDraftPhotos(photos);
-    if (returnTo === 'upload') {
-      router.back();
-    } else {
-      router.push('/job/upload');
-    }
+    if (returnTo === 'upload') router.back();
+    else router.replace('/job/upload');
   }, [photos, setDraftPhotos, router, returnTo]);
 
   const handleCancel = useCallback(() => {
     if (photos.length > 0) {
-      Alert.alert('Discard Photos?', 'Your captured photos will be lost.', [
+      Alert.alert('Discard Pages?', 'Captured pages will be lost.', [
         { text: 'Keep Shooting', style: 'cancel' },
         { text: 'Discard', style: 'destructive', onPress: () => router.back() },
       ]);
@@ -229,92 +253,66 @@ function NativeCameraScreen({ router, returnTo, setDraftPhotos }: { router: Retu
     }
   }, [photos, router]);
 
-  // ── Loading ───────────────────────────────────────────────────────────────
   if (!permission) {
     return (
-      <View style={p.root}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-        <LinearGradient colors={HERO_COLORS} locations={HERO_LOCS} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={StyleSheet.absoluteFill} />
-        <View style={p.centerBox}>
-          <Image source={{ uri: getSarvamLogoGradientUri() }} style={p.logo} resizeMode="contain" />
-          <Text style={p.loadingText}>Starting camera…</Text>
-        </View>
+      <View style={[p.safe, { alignItems: 'center', justifyContent: 'center' }]}>
+        <Text style={{ color: T.textMuted }}>Starting camera…</Text>
       </View>
     );
   }
 
-  // ── Permission screen ─────────────────────────────────────────────────────
   if (!permission.granted) {
     return (
-      <View style={p.root}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <SafeAreaView style={p.safe}>
+        <StatusBar barStyle="dark-content" backgroundColor={T.bg} />
+        <View style={p.topBar}>
+          <TouchableOpacity style={p.iconBtn} onPress={() => router.back()}>
+            <Icon name="close" size={22} color={T.text} />
+          </TouchableOpacity>
+        </View>
 
-        {/* Smooth gradient hero */}
-        <LinearGradient colors={HERO_COLORS} locations={HERO_LOCS} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={p.hero}>
-          <SafeAreaView style={p.heroInner}>
-            <Image
-              source={{ uri: getSarvamLogoGradientUri() }}
-              style={p.logo}
-              resizeMode="contain"
-            />
-          </SafeAreaView>
-        </LinearGradient>
-
-        {/* White panel — scrollable */}
-        <ScrollView
-          style={p.panel}
-          contentContainerStyle={p.panelContent}
-          showsVerticalScrollIndicator={false}
-          bounces={true}
-        >
-          {/* Brand */}
-          <View style={p.brandRow}>
-            <Text style={p.brand}>sarvam</Text>
-            <View style={p.licBadge}>
-              <Text style={p.licBadgeText}>for LIC</Text>
-            </View>
+        <ScrollView contentContainerStyle={p.content}>
+          <View style={p.iconCircle}>
+            <Icon name="camera" size={36} color={T.orange} strokeWidth={1.6} />
           </View>
-
-          {/* Heading */}
-          <Text style={p.headline}>Camera{'\n'}Access Needed</Text>
-          <Text style={p.sub}>
-            Allow camera access to photograph LIC policy documents. Our AI will scan and extract
-            policy details automatically.
+          <Text style={p.title}>Camera Access Needed</Text>
+          <Text style={p.desc}>
+            Allow camera access to photograph LIC policy documents. Our AI will scan and extract details automatically.
           </Text>
 
-          {/* Feature list */}
-          {[
-            { icon: '📄', text: 'Scan LIC policy documents' },
-            { icon: '✦', text: 'AI-powered OCR extraction' },
-            { icon: '🔒', text: 'Stays private on your device' },
-          ].map((f) => (
-            <View key={f.icon} style={p.featureRow}>
-              <Text style={p.featureIcon}>{f.icon}</Text>
-              <Text style={p.featureText}>{f.text}</Text>
-            </View>
-          ))}
+          <View style={p.featList}>
+            {[
+              'Scan LIC policy documents',
+              'AI-powered OCR extraction',
+              'Stays private on your device',
+            ].map((t) => (
+              <View key={t} style={p.featRow}>
+                <View style={p.featBullet}>
+                  <Icon name="check" size={12} color={T.green} strokeWidth={2.5} />
+                </View>
+                <Text style={p.featText}>{t}</Text>
+              </View>
+            ))}
+          </View>
 
-          {/* Primary button */}
           <TouchableOpacity style={p.allowBtn} onPress={requestPermission} activeOpacity={0.85}>
             <Text style={p.allowText}>Allow Camera Access</Text>
-            <Text style={p.allowArrow}>→</Text>
+            <Icon name="arrow-right" size={16} color="#fff" />
           </TouchableOpacity>
 
-          {/* Secondary link */}
-          <TouchableOpacity style={p.uploadLink} onPress={() => router.replace('/job/upload')} activeOpacity={0.7}>
-            <Text style={p.uploadLinkText}>↑  Upload a document instead</Text>
+          <TouchableOpacity
+            style={p.uploadLink}
+            onPress={() => router.replace('/job/upload')}
+            activeOpacity={0.7}
+          >
+            <Icon name="upload" size={14} color={T.textMuted} />
+            <Text style={p.uploadLinkText}>Upload a document instead</Text>
           </TouchableOpacity>
-
-          {/* Footer brand mark */}
-          <View style={p.footer}>
-            <Text style={p.footerText}>LIC Field Agent · Powered by Sarvam AI</Text>
-          </View>
         </ScrollView>
-      </View>
+      </SafeAreaView>
     );
   }
 
-  // ── Camera ────────────────────────────────────────────────────────────────
   return (
     <View style={cam.root}>
       <StatusBar barStyle="light-content" />
@@ -325,27 +323,22 @@ function NativeCameraScreen({ router, returnTo, setDraftPhotos }: { router: Retu
         pointerEvents="none"
       />
 
-      {/* Top bar */}
       <SafeAreaView style={cam.topBar}>
         <TouchableOpacity style={cam.cancelBtn} onPress={handleCancel}>
-          <Text style={cam.cancelText}>✕</Text>
+          <Icon name="close" size={22} color="#fff" />
         </TouchableOpacity>
         <View style={cam.countBadge}>
-          <Text style={cam.countText}>{photos.length} {photos.length === 1 ? 'photo' : 'photos'}</Text>
+          <Text style={cam.countText}>{photos.length} {photos.length === 1 ? 'page' : 'pages'}</Text>
         </View>
-        <TouchableOpacity style={cam.uploadBtn} onPress={() => router.replace('/job/upload')}>
-          <Text style={cam.uploadBtnText}>↑ Upload</Text>
-        </TouchableOpacity>
         <TouchableOpacity
           style={[cam.doneBtn, photos.length === 0 && cam.doneBtnDisabled]}
           onPress={handleDone}
           disabled={photos.length === 0}
         >
-          <Text style={[cam.doneText, photos.length === 0 && cam.doneTextDisabled]}>Done</Text>
+          <Text style={[cam.doneText, photos.length === 0 && { color: 'rgba(255,255,255,0.5)' }]}>Done</Text>
         </TouchableOpacity>
       </SafeAreaView>
 
-      {/* Corner guides */}
       <View style={[cam.guideFrame, { pointerEvents: 'none' } as any]}>
         <View style={[cam.corner, cam.cornerTL]} />
         <View style={[cam.corner, cam.cornerTR]} />
@@ -353,22 +346,16 @@ function NativeCameraScreen({ router, returnTo, setDraftPhotos }: { router: Retu
         <View style={[cam.corner, cam.cornerBR]} />
       </View>
 
-      {/* Bottom */}
       <View style={cam.bottomArea}>
         {photos.length > 0 ? (
-          <>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={cam.thumbStrip}>
-              {photos.map((uri, i) => (
-                <TouchableOpacity key={`${i}`} onLongPress={() => removePhoto(i)} activeOpacity={0.85} style={cam.thumbWrap}>
-                  <Image source={{ uri }} style={cam.thumb} />
-                  <View style={cam.thumbBadge}>
-                    <Text style={cam.thumbBadgeText}>{i + 1}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <Text style={cam.hint}>Long-press thumbnail to remove</Text>
-          </>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={cam.thumbStrip}>
+            {photos.map((uri, i) => (
+              <TouchableOpacity key={i} onLongPress={() => removePhoto(i)} activeOpacity={0.85} style={cam.thumbWrap}>
+                <Image source={{ uri }} style={cam.thumb} />
+                <View style={cam.thumbBadge}><Text style={cam.thumbBadgeText}>{i + 1}</Text></View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         ) : (
           <Text style={cam.hint}>Tap shutter to photograph the document</Text>
         )}
@@ -385,47 +372,45 @@ function NativeCameraScreen({ router, returnTo, setDraftPhotos }: { router: Retu
   );
 }
 
-// ── Permission screen styles ───────────────────────────────────────────────
+// ─── Permission screen styles ─────────────────────────────────────────────────
 const p = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#FFFFFF' },
-  hero: { height: Math.round(SCREEN_H * 0.38) },
-  heroInner: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  logoWrap: { alignItems: 'center', justifyContent: 'center' },
-  logo: { width: 110, height: 109 },
-  centerBox: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  loadingText: { color: 'rgba(255,255,255,0.8)', fontSize: 15, marginTop: 16 },
+  safe: { flex: 1, backgroundColor: T.bg },
+  topBar: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: SPACE.md, paddingVertical: SPACE.md,
+  },
+  iconBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  content: { padding: SPACE.xl, alignItems: 'center' },
 
-  panel: { flex: 1, backgroundColor: '#FFFFFF' },
-  panelContent: { paddingHorizontal: 28, paddingTop: 28, paddingBottom: 48 },
+  iconCircle: {
+    width: 88, height: 88, borderRadius: 44,
+    backgroundColor: T.orangeSoft,
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: SPACE.xl,
+  },
+  title: { ...FONT.h1, color: T.text, textAlign: 'center', marginBottom: 10 },
+  desc: { ...FONT.body, color: T.textMuted, textAlign: 'center', lineHeight: 22, marginBottom: SPACE.xl, maxWidth: 320 },
 
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
-  brand: { fontSize: 26, fontWeight: '800', color: '#1A1A1A', letterSpacing: -0.5 },
-  licBadge: { backgroundColor: '#FBE8D9', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 },
-  licBadgeText: { fontSize: 12, color: '#E8612A', fontWeight: '700' },
-
-  headline: { fontSize: 36, fontWeight: '800', color: '#1A1A1A', lineHeight: 44, marginBottom: 14, letterSpacing: -1 },
-  sub: { fontSize: 15, color: '#666', lineHeight: 24, marginBottom: 28 },
-
-  featureRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
-  featureIcon: { fontSize: 18, width: 28, textAlign: 'center' },
-  featureText: { fontSize: 15, color: '#333', flex: 1 },
+  featList: { width: '100%', maxWidth: 360, marginBottom: SPACE.xl, gap: SPACE.sm },
+  featRow: { flexDirection: 'row', alignItems: 'center', gap: SPACE.sm },
+  featBullet: {
+    width: 22, height: 22, borderRadius: 11,
+    backgroundColor: T.greenSoft, alignItems: 'center', justifyContent: 'center',
+  },
+  featText: { ...FONT.body, color: T.textSoft, flex: 1 },
 
   allowBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#1A1A1A', borderRadius: 16,
-    paddingHorizontal: 24, paddingVertical: 18, marginTop: 24, marginBottom: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: T.dark, borderRadius: RADIUS.pill,
+    paddingHorizontal: 24, paddingVertical: 14,
+    marginBottom: SPACE.md,
   },
-  allowText: { fontSize: 16, color: '#fff', fontWeight: '700' },
-  allowArrow: { fontSize: 20, color: '#fff' },
-
-  uploadLink: { alignItems: 'center', paddingVertical: 14 },
-  uploadLinkText: { fontSize: 15, color: '#888' },
-
-  footer: { marginTop: 24, alignItems: 'center' },
-  footerText: { fontSize: 12, color: '#BBBBBB', letterSpacing: 0.3 },
+  allowText: { color: '#fff', ...FONT.bodyStrong },
+  uploadLink: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10 },
+  uploadLinkText: { ...FONT.small, color: T.textMuted },
 });
 
-// ── Camera screen styles ───────────────────────────────────────────────────
+// ─── Native camera overlay styles ─────────────────────────────────────────────
 const SHUTTER = 76;
 const CORNER = 24;
 const BORDER = 3;
@@ -438,21 +423,19 @@ const cam = StyleSheet.create({
     paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8,
   },
   cancelBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  cancelText: { color: '#fff', fontSize: 20, fontWeight: '300' },
   countBadge: { backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
   countText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  uploadBtn: { backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)' },
-  uploadBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
-  doneBtn: { backgroundColor: '#E8612A', borderRadius: 20, paddingHorizontal: 20, paddingVertical: 8 },
+  doneBtn: { backgroundColor: T.orange, borderRadius: 20, paddingHorizontal: 20, paddingVertical: 8 },
   doneBtnDisabled: { backgroundColor: 'rgba(255,255,255,0.25)' },
   doneText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  doneTextDisabled: { color: 'rgba(255,255,255,0.5)' },
+
   guideFrame: { position: 'absolute', top: '20%', left: '8%', right: '8%', bottom: '28%' },
   corner: { position: 'absolute', width: CORNER, height: CORNER, borderColor: 'rgba(255,255,255,0.75)' },
   cornerTL: { top: 0, left: 0, borderTopWidth: BORDER, borderLeftWidth: BORDER, borderTopLeftRadius: 4 },
   cornerTR: { top: 0, right: 0, borderTopWidth: BORDER, borderRightWidth: BORDER, borderTopRightRadius: 4 },
   cornerBL: { bottom: 0, left: 0, borderBottomWidth: BORDER, borderLeftWidth: BORDER, borderBottomLeftRadius: 4 },
   cornerBR: { bottom: 0, right: 0, borderBottomWidth: BORDER, borderRightWidth: BORDER, borderBottomRightRadius: 4 },
+
   bottomArea: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     paddingBottom: 40, alignItems: 'center',

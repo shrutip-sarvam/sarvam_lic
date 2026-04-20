@@ -2,32 +2,54 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type VisitType =
-  | 'New Proposal'
-  | 'Premium Collection'
-  | 'Claim Survey'
-  | 'Policy Revival'
-  | 'Maturity Collection'
+export type ClaimType =
   | 'Death Claim'
-  | 'Other';
+  | 'Maturity Claim'
+  | 'Survival Benefit'
+  | 'Disability Claim'
+  | 'Surrender Claim';
 
 export type JobStatus = 'Pending' | 'In Progress' | 'Done';
 
+/** Real LIC Claim Form — fields match an actual LIC Form 3783 / A1 claim form */
 export interface Job {
   id: string;
-  visitType: VisitType;
-  policyNumber: string;
-  holderName: string;
-  sumAssured: string;
-  agentCode: string;
-  branch: string;
-  notes: string;
+  createdAt: string;
+  status: JobStatus;
+
+  /* Document meta */
   docTitle: string;
   handwritten: boolean;
   photoUris: string[];
   rawExtractedText: string;
-  status: JobStatus;
-  createdAt: string;
+
+  /* Claim details */
+  claimType: ClaimType;
+  dateOfEvent: string;        // death / maturity date
+  causeOfDeath?: string;
+
+  /* Policy details */
+  policyNumber: string;
+  holderName: string;         // life assured
+  sumAssured: string;
+  dateOfCommencement: string;
+
+  /* Claimant (person filing the claim) */
+  claimantName: string;
+  claimantRelation: string;   // Self / Spouse / Son / Daughter / Nominee etc.
+  claimantPhone: string;
+
+  /* Payout */
+  bankAccount: string;
+  bankIfsc: string;
+  bankName: string;
+
+  /* Agent */
+  agentCode: string;
+  branchCode: string;
+
+  /* Remarks */
+  notes: string;
 }
 
 export interface ExtractedData {
@@ -72,7 +94,7 @@ export const useJobsStore = create<JobsState>()(
         const id = Date.now().toString();
         set((s) => ({
           jobs: [
-            { ...data, id, createdAt: new Date().toISOString(), status: 'Pending' },
+            { ...data, id, createdAt: new Date().toISOString(), status: 'Pending' as JobStatus },
             ...s.jobs,
           ],
         }));
@@ -85,7 +107,7 @@ export const useJobsStore = create<JobsState>()(
       deleteJob: (id) => set((s) => ({ jobs: s.jobs.filter((j) => j.id !== id) })),
     }),
     {
-      name: 'lic-jobs-v2',
+      name: 'lic-jobs-v3',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({ jobs: s.jobs }),
     }

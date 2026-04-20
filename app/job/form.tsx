@@ -1,298 +1,434 @@
-import React, { useState, useCallback } from 'react';
+/**
+ * LIC Claim Form — real fields matching an actual LIC claim.
+ * Pre-filled from Sarvam Vision OCR. User reviews/edits then saves.
+ * Clean Akshar-style layout: sectioned fields, pill inputs, no emojis.
+ */
+import React, { useMemo, useState, useCallback } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  Image,
-  Alert,
-  StatusBar,
-  KeyboardAvoidingView,
-  Platform,
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  ScrollView, SafeAreaView, StatusBar, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
-import { useJobsStore, type VisitType } from '../../store/jobs.store';
-import { SARVAM_MONOGRAM_BLACK, SARVAM_WORDMARK_BLACK } from '../../assets/sarvam-logo';
+import { useJobsStore, type ClaimType } from '../../store/jobs.store';
+import { Icon } from '../../components/ui/Icon';
+import { T, SPACE, RADIUS, FONT } from '../../components/ui/tokens';
 
-const C = {
-  bg: '#F7F5F2',
-  white: '#FFFFFF',
-  text: '#1A1A1A',
-  muted: '#9A9A9A',
-  border: '#EBEBEB',
-  orange: '#E8612A',
-  peach: '#FBE8D9',
-  peachText: '#7A3A18',
-  navy: '#1a3a6b',
-  gold: '#f5c518',
-};
-
-const VISIT_TYPES: VisitType[] = [
-  'New Proposal', 'Premium Collection', 'Claim Survey',
-  'Policy Revival', 'Maturity Collection', 'Death Claim', 'Other',
+const CLAIM_TYPES: ClaimType[] = [
+  'Death Claim', 'Maturity Claim', 'Survival Benefit', 'Disability Claim', 'Surrender Claim',
 ];
 
-export default function JobFormScreen() {
-  const router = useRouter();
-  const { draftPhotoUris, draftExtracted, draftDocTitle, draftHandwritten, clearDraft, addJob } = useJobsStore();
+const RELATIONS = ['Self', 'Spouse', 'Son', 'Daughter', 'Nominee', 'Other'];
 
-  const [visitType, setVisitType] = useState<VisitType>('New Proposal');
+export default function FormScreen() {
+  const router = useRouter();
+  const {
+    draftPhotoUris, draftExtracted, draftDocTitle, draftHandwritten,
+    addJob, clearDraft,
+  } = useJobsStore();
+
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  // Policy (from OCR)
   const [policyNumber, setPolicyNumber] = useState(draftExtracted?.policyNumber ?? '');
   const [holderName, setHolderName] = useState(draftExtracted?.holderName ?? '');
   const [sumAssured, setSumAssured] = useState(draftExtracted?.sumAssured ?? '');
+  const [dateOfCommencement, setDateOfCommencement] = useState('');
+
+  // Claim
+  const [claimType, setClaimType] = useState<ClaimType>('Death Claim');
+  const [dateOfEvent, setDateOfEvent] = useState(today);
+  const [causeOfDeath, setCauseOfDeath] = useState('');
+
+  // Claimant
+  const [claimantName, setClaimantName] = useState('');
+  const [claimantRelation, setClaimantRelation] = useState('Self');
+  const [claimantPhone, setClaimantPhone] = useState('');
+
+  // Bank
+  const [bankAccount, setBankAccount] = useState('');
+  const [bankIfsc, setBankIfsc] = useState('');
+  const [bankName, setBankName] = useState('');
+
+  // Agent
   const [agentCode, setAgentCode] = useState('');
-  const [branch, setBranch] = useState('');
+  const [branchCode, setBranchCode] = useState('');
+
   const [notes, setNotes] = useState('');
-  const [saving, setSaving] = useState(false);
 
-  const handleSave = useCallback(async () => {
-    if (!holderName.trim() && !policyNumber.trim()) {
-      Alert.alert('Required', 'Enter the policyholder name or policy number.');
-      return;
-    }
-    setSaving(true);
-    try {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      addJob({
-        visitType,
-        policyNumber: policyNumber.trim(),
-        holderName: holderName.trim(),
-        sumAssured: sumAssured.trim(),
-        agentCode: agentCode.trim(),
-        branch: branch.trim(),
-        notes: notes.trim(),
-        docTitle: draftDocTitle,
-        handwritten: draftHandwritten,
-        photoUris: draftPhotoUris,
-        rawExtractedText: draftExtracted?.rawText ?? '',
-      });
-      clearDraft();
-      router.replace('/(tabs)');
-    } finally {
-      setSaving(false);
-    }
-  }, [visitType, policyNumber, holderName, sumAssured, agentCode, branch, notes, draftPhotoUris, draftExtracted]);
+  const handleSave = useCallback(() => {
+    if (!policyNumber.trim()) { Alert.alert('Missing info', 'Policy number is required.'); return; }
+    if (!holderName.trim()) { Alert.alert('Missing info', 'Life assured name is required.'); return; }
+    if (!claimantName.trim()) { Alert.alert('Missing info', 'Claimant name is required.'); return; }
 
-  const hasAutoFill = !!(draftExtracted?.policyNumber || draftExtracted?.holderName || draftExtracted?.sumAssured);
+    addJob({
+      docTitle: draftDocTitle || holderName,
+      handwritten: draftHandwritten,
+      photoUris: draftPhotoUris,
+      rawExtractedText: draftExtracted?.rawText ?? '',
+      claimType,
+      dateOfEvent,
+      causeOfDeath: claimType === 'Death Claim' ? causeOfDeath : undefined,
+      policyNumber: policyNumber.trim(),
+      holderName: holderName.trim(),
+      sumAssured: sumAssured.trim(),
+      dateOfCommencement,
+      claimantName: claimantName.trim(),
+      claimantRelation,
+      claimantPhone: claimantPhone.trim(),
+      bankAccount: bankAccount.trim(),
+      bankIfsc: bankIfsc.trim().toUpperCase(),
+      bankName: bankName.trim(),
+      agentCode: agentCode.trim(),
+      branchCode: branchCode.trim(),
+      notes: notes.trim(),
+    });
+
+    clearDraft();
+    router.replace('/(tabs)');
+  }, [
+    policyNumber, holderName, claimantName, addJob, draftDocTitle, draftHandwritten, draftPhotoUris,
+    draftExtracted, claimType, dateOfEvent, causeOfDeath, sumAssured, dateOfCommencement,
+    claimantRelation, claimantPhone, bankAccount, bankIfsc, bankName, agentCode, branchCode, notes,
+    clearDraft, router,
+  ]);
 
   return (
     <SafeAreaView style={s.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor={C.white} />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <StatusBar barStyle="dark-content" backgroundColor={T.bg} />
 
-        {/* Sarvam header */}
-        <View style={s.header}>
-          <Text style={s.menuIcon}>≡</Text>
-          <View style={s.headerCenter}>
-            <Image source={SARVAM_MONOGRAM_BLACK} style={s.mark} resizeMode="contain" />
-            <Image source={SARVAM_WORDMARK_BLACK} style={s.brand} resizeMode="contain" />
-            <View style={s.badge}>
-              <Text style={s.badgeText}>LIC Field</Text>
-            </View>
-          </View>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text style={s.closeBtn}>✕</Text>
-          </TouchableOpacity>
+      {/* Header */}
+      <View style={s.header}>
+        <TouchableOpacity style={s.iconBtn} onPress={() => router.back()}>
+          <Icon name="chevron-left" size={22} color={T.text} />
+        </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={s.headerTitle}>LIC Claim Form</Text>
+          <Text style={s.headerSub}>Review and complete</Text>
         </View>
+        <View style={s.ocrPill}>
+          <Icon name="sparkle" size={12} color={T.blue} strokeWidth={2} />
+          <Text style={s.ocrPillText}>OCR filled</Text>
+        </View>
+      </View>
 
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <ScrollView
           contentContainerStyle={s.scroll}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* OCR banner as a "message bubble" */}
-          {hasAutoFill && (
-            <View style={s.bubbleWrap}>
-              <View style={s.bubbleBot}>
-                <Text style={s.bubbleIcon}>✦</Text>
-                <Text style={s.bubbleText}>
-                  I found policy details in your photos. Please verify and edit below.
-                </Text>
-              </View>
+          {/* Claim type */}
+          <Section title="Claim Type">
+            <ChipRow
+              options={CLAIM_TYPES}
+              value={claimType}
+              onChange={(v) => setClaimType(v as ClaimType)}
+            />
+          </Section>
+
+          {/* Policy */}
+          <Section title="Policy Details">
+            <Field
+              label="Policy Number"
+              value={policyNumber}
+              onChangeText={setPolicyNumber}
+              placeholder="e.g. 123456789"
+              required
+            />
+            <Field
+              label="Life Assured"
+              value={holderName}
+              onChangeText={setHolderName}
+              placeholder="Full name"
+              required
+            />
+            <Row>
+              <Field
+                label="Sum Assured"
+                value={sumAssured}
+                onChangeText={setSumAssured}
+                placeholder="₹ 5,00,000"
+                flex
+              />
+              <Field
+                label="Date of Commencement"
+                value={dateOfCommencement}
+                onChangeText={setDateOfCommencement}
+                placeholder="YYYY-MM-DD"
+                flex
+              />
+            </Row>
+          </Section>
+
+          {/* Event */}
+          <Section title={claimType === 'Death Claim' ? 'Death Details' : 'Event Details'}>
+            <Row>
+              <Field
+                label={claimType === 'Death Claim' ? 'Date of Death' : 'Event Date'}
+                value={dateOfEvent}
+                onChangeText={setDateOfEvent}
+                placeholder="YYYY-MM-DD"
+                flex
+              />
+              {claimType === 'Death Claim' && (
+                <Field
+                  label="Cause of Death"
+                  value={causeOfDeath}
+                  onChangeText={setCauseOfDeath}
+                  placeholder="e.g. Natural / Accident"
+                  flex
+                />
+              )}
+            </Row>
+          </Section>
+
+          {/* Claimant */}
+          <Section title="Claimant Details">
+            <Field
+              label="Claimant Name"
+              value={claimantName}
+              onChangeText={setClaimantName}
+              placeholder="Full name"
+              required
+            />
+            <View style={s.field}>
+              <Text style={s.label}>Relation to Life Assured</Text>
+              <ChipRow
+                options={RELATIONS}
+                value={claimantRelation}
+                onChange={setClaimantRelation}
+              />
             </View>
-          )}
+            <Field
+              label="Phone Number"
+              value={claimantPhone}
+              onChangeText={setClaimantPhone}
+              placeholder="+91"
+              keyboardType="phone-pad"
+            />
+          </Section>
 
-          {/* Photo strip */}
-          {draftPhotoUris.length > 0 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.photoStrip}>
-              {draftPhotoUris.map((uri, i) => (
-                <Image key={i} source={{ uri }} style={s.photoThumb} />
-              ))}
-            </ScrollView>
-          )}
+          {/* Bank */}
+          <Section title="Bank Details (for payout)">
+            <Field
+              label="Account Number"
+              value={bankAccount}
+              onChangeText={setBankAccount}
+              placeholder="Bank account number"
+              keyboardType="numeric"
+            />
+            <Row>
+              <Field
+                label="IFSC Code"
+                value={bankIfsc}
+                onChangeText={(v) => setBankIfsc(v.toUpperCase())}
+                placeholder="e.g. SBIN0001234"
+                flex
+                autoCapitalize="characters"
+              />
+              <Field
+                label="Bank Name"
+                value={bankName}
+                onChangeText={setBankName}
+                placeholder="e.g. SBI"
+                flex
+              />
+            </Row>
+          </Section>
 
-          {/* Visit type chips */}
-          <Text style={s.sectionLabel}>Visit Type</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.chipScroll}>
-            {VISIT_TYPES.map((t) => {
-              const active = visitType === t;
-              return (
-                <TouchableOpacity
-                  key={t}
-                  style={[s.chip, active && s.chipActive]}
-                  onPress={() => setVisitType(t)}
-                  activeOpacity={0.75}
-                >
-                  <Text style={[s.chipText, active && s.chipTextActive]}>{t}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+          {/* Agent */}
+          <Section title="Agent & Branch">
+            <Row>
+              <Field
+                label="Agent Code"
+                value={agentCode}
+                onChangeText={setAgentCode}
+                placeholder="Optional"
+                flex
+              />
+              <Field
+                label="Branch Code"
+                value={branchCode}
+                onChangeText={setBranchCode}
+                placeholder="Optional"
+                flex
+              />
+            </Row>
+          </Section>
 
-          {/* Fields */}
-          <Text style={s.sectionLabel}>Policy Details</Text>
-          <View style={s.card}>
-            <Field label="Policy Number" placeholder="e.g. 123456789" value={policyNumber} onChangeText={setPolicyNumber} ai={!!draftExtracted?.policyNumber} />
-            <Sep />
-            <Field label="Policyholder Name" placeholder="Full name" value={holderName} onChangeText={setHolderName} ai={!!draftExtracted?.holderName} />
-            <Sep />
-            <Field label="Sum Assured" placeholder="e.g. ₹5,00,000" value={sumAssured} onChangeText={setSumAssured} ai={!!draftExtracted?.sumAssured} />
-          </View>
-
-          <Text style={s.sectionLabel}>Agent Details</Text>
-          <View style={s.card}>
-            <Field label="Agent Code" placeholder="Your LIC agent code" value={agentCode} onChangeText={setAgentCode} />
-            <Sep />
-            <Field label="Branch / Division" placeholder="e.g. Mumbai North" value={branch} onChangeText={setBranch} />
-          </View>
-
-          <Text style={s.sectionLabel}>Remarks</Text>
-          <View style={s.card}>
+          {/* Notes */}
+          <Section title="Additional Remarks">
             <TextInput
-              style={s.notesInput}
-              placeholder="Visit observations, next steps…"
-              placeholderTextColor="#bbb"
+              style={[s.input, s.textarea]}
               value={notes}
               onChangeText={setNotes}
+              placeholder="Any additional information…"
+              placeholderTextColor={T.textFaint}
               multiline
               textAlignVertical="top"
-              numberOfLines={4}
             />
-          </View>
+          </Section>
 
-          {/* Submit — dark pill like Sarvam */}
-          <TouchableOpacity
-            style={[s.submitBtn, saving && { opacity: 0.6 }]}
-            onPress={handleSave}
-            disabled={saving}
-            activeOpacity={0.88}
-          >
-            <Text style={s.submitText}>{saving ? 'Saving…' : 'Submit Visit Report'}</Text>
-          </TouchableOpacity>
+          <View style={{ height: SPACE.xxl }} />
+        </ScrollView>
 
+        {/* Sticky footer */}
+        <View style={s.footer}>
           <TouchableOpacity style={s.cancelBtn} onPress={() => router.back()}>
             <Text style={s.cancelText}>Cancel</Text>
           </TouchableOpacity>
-        </ScrollView>
-
+          <TouchableOpacity style={s.saveBtn} onPress={handleSave} activeOpacity={0.88}>
+            <Icon name="check" size={16} color="#fff" strokeWidth={2.5} />
+            <Text style={s.saveText}>Save Claim</Text>
+          </TouchableOpacity>
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-function Sep() {
-  return <View style={{ height: 1, backgroundColor: '#F0F0F0', marginHorizontal: -16 }} />;
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={sec.wrap}>
+      <Text style={sec.title}>{title}</Text>
+      <View style={sec.body}>{children}</View>
+    </View>
+  );
+}
+const sec = StyleSheet.create({
+  wrap: { marginBottom: SPACE.lg },
+  title: { ...FONT.label, color: T.textMuted, marginBottom: SPACE.sm, marginLeft: 4 },
+  body: {
+    backgroundColor: T.bg,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1, borderColor: T.borderSoft,
+    padding: SPACE.md,
+    gap: SPACE.md,
+  },
+});
+
+function Row({ children }: { children: React.ReactNode }) {
+  return <View style={{ flexDirection: 'row', gap: SPACE.sm }}>{children}</View>;
 }
 
-function Field({
-  label, placeholder, value, onChangeText, ai, multiline,
-}: {
-  label: string; placeholder: string; value: string;
-  onChangeText: (v: string) => void; ai?: boolean; multiline?: boolean;
+function Field(props: {
+  label: string;
+  value: string;
+  onChangeText: (v: string) => void;
+  placeholder?: string;
+  required?: boolean;
+  flex?: boolean;
+  keyboardType?: any;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
 }) {
   return (
-    <View style={f.wrap}>
-      <View style={f.row}>
-        <Text style={f.label}>{label}</Text>
-        {ai && (
-          <View style={f.aiBadge}>
-            <Text style={f.aiText}>AI filled</Text>
-          </View>
-        )}
-      </View>
+    <View style={[s.field, props.flex && { flex: 1 }]}>
+      <Text style={s.label}>
+        {props.label}
+        {props.required && <Text style={{ color: T.red }}> *</Text>}
+      </Text>
       <TextInput
-        style={[f.input, ai && f.inputAi, multiline && f.inputMulti]}
-        placeholder={placeholder}
-        placeholderTextColor="#bbb"
-        value={value}
-        onChangeText={onChangeText}
-        multiline={multiline}
-        textAlignVertical={multiline ? 'top' : 'center'}
+        style={s.input}
+        value={props.value}
+        onChangeText={props.onChangeText}
+        placeholder={props.placeholder}
+        placeholderTextColor={T.textFaint}
+        keyboardType={props.keyboardType}
+        autoCapitalize={props.autoCapitalize ?? 'sentences'}
       />
     </View>
   );
 }
 
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: C.white },
-  header: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 20, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: C.border,
-    backgroundColor: C.white,
+function ChipRow({
+  options, value, onChange,
+}: { options: string[]; value: string; onChange: (v: string) => void }) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ gap: 8, paddingVertical: 2 }}
+    >
+      {options.map((opt) => {
+        const selected = value === opt;
+        return (
+          <TouchableOpacity
+            key={opt}
+            onPress={() => onChange(opt)}
+            activeOpacity={0.8}
+            style={[chip.base, selected ? chip.on : chip.off]}
+          >
+            <Text style={[chip.txt, selected ? chip.txtOn : chip.txtOff]}>{opt}</Text>
+          </TouchableOpacity>
+        );
+      })}
+    </ScrollView>
+  );
+}
+const chip = StyleSheet.create({
+  base: {
+    paddingHorizontal: SPACE.md, paddingVertical: 8,
+    borderRadius: RADIUS.pill, borderWidth: 1,
   },
-  menuIcon: { fontSize: 20, color: C.text, width: 36 },
-  headerCenter: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  brand: { fontSize: 22, fontWeight: '800', color: C.text, letterSpacing: -0.5 },
-  badge: { backgroundColor: '#F0F0F0', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3 },
-  badgeText: { fontSize: 12, color: C.muted, fontWeight: '600' },
-  closeBtn: { fontSize: 18, color: C.muted, width: 36, textAlign: 'right' },
-
-  scroll: { padding: 16, paddingBottom: 48, backgroundColor: C.bg },
-
-  bubbleWrap: { marginBottom: 16 },
-  bubbleBot: {
-    backgroundColor: C.peach, borderRadius: 18, borderTopLeftRadius: 4,
-    padding: 14, flexDirection: 'row', gap: 8, alignItems: 'flex-start',
-  },
-  bubbleIcon: { fontSize: 14, color: C.orange, marginTop: 1 },
-  bubbleText: { flex: 1, fontSize: 14, color: C.peachText, lineHeight: 20 },
-
-  photoStrip: { marginBottom: 16 },
-  photoThumb: { width: 68, height: 68, borderRadius: 12, marginRight: 8 },
-
-  sectionLabel: {
-    fontSize: 11, fontWeight: '700', color: C.muted,
-    textTransform: 'uppercase', letterSpacing: 0.8,
-    marginBottom: 8, marginTop: 16,
-  },
-
-  chipScroll: { marginBottom: 4 },
-  chip: {
-    paddingHorizontal: 14, paddingVertical: 8,
-    borderRadius: 20, borderWidth: 1.5, borderColor: C.border,
-    backgroundColor: C.white, marginRight: 8,
-  },
-  chipActive: { backgroundColor: C.orange, borderColor: C.orange },
-  chipText: { fontSize: 13, fontWeight: '500', color: '#666' },
-  chipTextActive: { color: '#fff', fontWeight: '700' },
-
-  card: {
-    backgroundColor: C.white, borderRadius: 16,
-    paddingHorizontal: 16, paddingVertical: 4,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
-  },
-
-  notesInput: { fontSize: 15, color: C.text, paddingVertical: 12, minHeight: 90 },
-
-  submitBtn: { marginTop: 28, borderRadius: 14, paddingVertical: 16, alignItems: 'center', backgroundColor: '#1A1A1A' },
-  submitText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  cancelBtn: { marginTop: 12, alignItems: 'center', paddingVertical: 10 },
-  cancelText: { color: C.muted, fontSize: 15 },
+  on: { backgroundColor: T.dark, borderColor: T.dark },
+  off: { backgroundColor: T.bg, borderColor: T.border },
+  txt: { ...FONT.small, fontWeight: '600' },
+  txtOn: { color: '#fff' },
+  txtOff: { color: T.textSoft },
 });
 
-const f = StyleSheet.create({
-  wrap: { paddingVertical: 12 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  label: { fontSize: 11, fontWeight: '600', color: C.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
-  aiBadge: { backgroundColor: C.peach, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
-  aiText: { fontSize: 10, color: C.orange, fontWeight: '700' },
-  input: { fontSize: 15, color: C.text },
-  inputAi: { color: C.orange, fontWeight: '500' },
-  inputMulti: { minHeight: 56 },
+// ─── Main styles ──────────────────────────────────────────────────────────────
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: T.bgMuted },
+
+  header: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: SPACE.md, paddingVertical: SPACE.md,
+    backgroundColor: T.bg,
+    borderBottomWidth: 1, borderBottomColor: T.borderSoft,
+    gap: SPACE.sm,
+  },
+  iconBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { ...FONT.h3, color: T.text },
+  headerSub: { ...FONT.tiny, color: T.textMuted, marginTop: 1 },
+  ocrPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: T.blueSoft, borderRadius: RADIUS.pill,
+    paddingHorizontal: 10, paddingVertical: 4,
+  },
+  ocrPillText: { ...FONT.tiny, color: T.blue, fontWeight: '700' },
+
+  scroll: { padding: SPACE.lg },
+
+  field: { gap: 6 },
+  label: { ...FONT.small, fontWeight: '600', color: T.textSoft },
+  input: {
+    borderWidth: 1, borderColor: T.border, borderRadius: RADIUS.md,
+    paddingHorizontal: SPACE.md, paddingVertical: 11,
+    ...FONT.body, color: T.text, backgroundColor: T.bg,
+  },
+  textarea: { minHeight: 90, paddingTop: 12 },
+
+  footer: {
+    flexDirection: 'row', gap: SPACE.sm,
+    paddingHorizontal: SPACE.lg, paddingVertical: SPACE.md,
+    backgroundColor: T.bg,
+    borderTopWidth: 1, borderTopColor: T.borderSoft,
+  },
+  cancelBtn: {
+    flex: 1, paddingVertical: 13,
+    borderRadius: RADIUS.pill, backgroundColor: T.bgMuted,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  cancelText: { ...FONT.bodyStrong, color: T.text },
+  saveBtn: {
+    flex: 2, flexDirection: 'row', gap: 8,
+    paddingVertical: 13, borderRadius: RADIUS.pill, backgroundColor: T.dark,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  saveText: { color: '#fff', ...FONT.bodyStrong },
 });

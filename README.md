@@ -19,8 +19,8 @@ The full user journey:
 
 1. **Landing** — branded Akshar hero with gradient, mandala logo, and
    `Continue` CTA.
-2. **Home** — Tatva-style dashboard with an `Upload document` card, a `Recent`
-   list of past visits, and a `Join Waitlist` primary action.
+2. **Home** — Tatva-style dashboard with an `Upload document` card and a
+   `Recent` list of past visits.
 3. **Upload dialog** — pick Camera, Photo Library, or File, plus a
    `Document Language` picker (23 Indic languages).
 4. **Capture** — multi-page camera with a `Done` CTA that groups every shot

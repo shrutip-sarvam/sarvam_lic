@@ -102,7 +102,7 @@ export default function FormScreen() {
           <Icon name="chevron-left" size={22} color={T.text} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={s.headerTitle}>LIC Claim Form</Text>
+          <Text style={s.headerTitle}>LIC Proposal Form</Text>
           <Text style={s.headerSub}>Review and complete</Text>
         </View>
         <View style={s.ocrPill}>

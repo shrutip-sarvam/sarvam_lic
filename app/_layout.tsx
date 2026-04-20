@@ -49,11 +49,10 @@ export default function RootLayout() {
           <StatusBar style="auto" />
           <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
             <Stack.Screen name="index" options={{ animation: 'none' }} />
-            <Stack.Screen name="auth/splash" options={{ animation: 'none' }} />
             <Stack.Screen name="auth/sign-in" />
             <Stack.Screen name="auth/otp" />
             <Stack.Screen name="auth/name" />
-            <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+            <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
             <Stack.Screen
               name="job/camera"
               options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', headerShown: false }}
@@ -65,10 +64,6 @@ export default function RootLayout() {
             <Stack.Screen
               name="job/form"
               options={{ animation: 'slide_from_right', headerShown: false }}
-            />
-            <Stack.Screen
-              name="job/upload"
-              options={{ presentation: 'modal', animation: 'slide_from_bottom', headerShown: false }}
             />
           </Stack>
         </QueryClientProvider>

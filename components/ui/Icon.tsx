@@ -70,11 +70,18 @@ export function Icon({ name, size = 20, color = '#0A0A0A', strokeWidth = 1.75 }:
       );
 
     case 'check':
+      // SVG polyline renders crisp at any size — the old View-based check drifted
+      // at small sizes (≤ 16 px) because of sub-pixel rotated strokes.
       return (
-        <View style={container}>
-          <View style={{ width: s * 0.28, height: sw, backgroundColor: color, borderRadius: sw / 2, position: 'absolute', left: s * 0.18, top: s * 0.55, transform: [{ rotate: '45deg' }] }} />
-          <View style={{ width: s * 0.5, height: sw, backgroundColor: color, borderRadius: sw / 2, position: 'absolute', left: s * 0.35, top: s * 0.48, transform: [{ rotate: '-45deg' }] }} />
-        </View>
+        <Svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <Polyline
+            points="4 12 10 18 20 6"
+            stroke={color}
+            strokeWidth={sw}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
       );
 
     case 'chevron-down':
@@ -317,16 +324,22 @@ export function Icon({ name, size = 20, color = '#0A0A0A', strokeWidth = 1.75 }:
 
     case 'check-circle':
       return (
-        <View style={container}>
-          <View style={{
-            width: s * 0.85, height: s * 0.85,
-            borderWidth: sw, borderColor: color,
-            borderRadius: s * 0.425,
-            position: 'absolute', top: s * 0.075, left: s * 0.075,
-          }} />
-          <View style={{ width: s * 0.2, height: sw, backgroundColor: color, borderRadius: sw / 2, position: 'absolute', left: s * 0.28, top: s * 0.52, transform: [{ rotate: '45deg' }] }} />
-          <View style={{ width: s * 0.38, height: sw, backgroundColor: color, borderRadius: sw / 2, position: 'absolute', left: s * 0.4, top: s * 0.46, transform: [{ rotate: '-45deg' }] }} />
-        </View>
+        <Svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <Path
+            d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z"
+            stroke={color}
+            strokeWidth={sw}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <Polyline
+            points="7 12.5 10.5 16 17 9"
+            stroke={color}
+            strokeWidth={sw}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
       );
 
     case 'share':

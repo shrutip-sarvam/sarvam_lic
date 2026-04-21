@@ -383,7 +383,7 @@ export default function UploadDocumentScreen() {
                     </View>
                     {selected && (
                       <View style={s.langCheck}>
-                        <Icon name="check" size={14} color="#fff" strokeWidth={2.4} />
+                        <Icon name="check" size={16} color="#fff" strokeWidth={2.6} />
                       </View>
                     )}
                   </TouchableOpacity>
@@ -467,8 +467,10 @@ const s = StyleSheet.create({
   fileChipName: { flex: 1, ...FONT.body, color: T.text },
   fileChipRemove: { width: 24, height: 24, borderRadius: 12, backgroundColor: T.border, alignItems: 'center', justifyContent: 'center' },
 
-  row: { flexDirection: 'row', gap: SPACE.md, marginBottom: SPACE.lg },
-  col: { flex: 1 },
+  // Title + Language sit side-by-side on tablets/desktop web, but stack on
+  // phones (<~480 px) so neither field gets cramped to unreadable widths.
+  row: { flexDirection: 'row', gap: SPACE.md, marginBottom: SPACE.lg, flexWrap: 'wrap' },
+  col: { flex: 1, minWidth: 220 },
   field: { marginBottom: SPACE.xl },
   label: { ...FONT.small, fontWeight: '600', color: T.textSoft, marginBottom: 8 },
   input: {
